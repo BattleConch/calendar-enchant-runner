@@ -256,6 +256,13 @@ export function NoteEditor({
                   label="Camera"
                 />
               </div>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={save}
+                className="mt-3 w-full rounded-full bg-clay py-4 text-center font-medium text-ivory shadow-sm"
+              >
+                {existing ? "Save changes" : "Save note"}
+              </motion.button>
               <input
                 ref={libraryInput}
                 type="file"
