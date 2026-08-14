@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
-import { ConfirmDelete, DetailActions, PreviewRow, TagBadge } from "./DetailChrome";
+import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 
 const TAGS: TagColor[] = ["blue", "green", "orange", "yellow", "teal", "pink", "purple", "red"];
@@ -35,10 +35,13 @@ export function EventEditor({
   const [allDay, setAllDay] = useState(false);
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
+  const [warn, setWarn] = useState(false);
+  const [baseline, setBaseline] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setConfirming(false);
+    setWarn(false);
     setMode(existing ? "preview" : "edit");
     if (existing) {
       setTitle(existing.title);
@@ -48,6 +51,7 @@ export function EventEditor({
       setTag(existing.tag);
       setNotes(existing.notes ?? "");
       setAllDay(!!existing.allDay);
+      setBaseline(snap(existing.title, existing.date, existing.start, existing.end, existing.tag, existing.notes ?? "", !!existing.allDay));
     } else {
       setTitle("");
       setDate(defaultDate);
@@ -56,11 +60,15 @@ export function EventEditor({
       setTag("blue");
       setNotes("");
       setAllDay(false);
+      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, "blue", "", false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId, defaultDate, defaultStart, defaultEnd]);
 
 
+
+  const dirty = mode === "edit" && snap(title, date, start, end, tag, notes, allDay) !== baseline;
+  const attemptClose = () => { if (dirty) setWarn(true); else onClose(); };
 
   const save = () => {
     if (!title.trim()) return;
@@ -79,7 +87,7 @@ export function EventEditor({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={attemptClose}
             className="fixed inset-0 z-40 bg-clay/40 backdrop-blur-sm"
           />
           <motion.div
@@ -92,9 +100,12 @@ export function EventEditor({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.7 }}
             dragTransition={{ bounceStiffness: 260, bounceDamping: 32 }}
-            onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) onClose(); }}
-            className="fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
-            style={{ boxShadow: "0 -24px 70px -24px rgba(74,63,53,0.45)" }}
+            onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) attemptClose(); }}
+            className="fixed inset-x-0 bottom-0 z-50 flex h-[92dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
+            style={{
+              boxShadow: "0 -24px 70px -24px rgba(74,63,53,0.45)",
+              border: warn ? "2px solid var(--tag-red)" : "2px solid transparent",
+            }}
           >
             <div className="shrink-0">
               <div className="flex justify-center pt-3">
@@ -111,7 +122,7 @@ export function EventEditor({
                     onClose={onClose}
                   />
                 ) : (
-                  <button onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover">
+                  <button onClick={attemptClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover">
                     <X className="h-4 w-4" />
                   </button>
                 )}
@@ -296,6 +307,11 @@ export function EventEditor({
             </motion.div>
 
           </motion.div>
+          <UnsavedChanges
+            open={warn}
+            onKeepEditing={() => setWarn(false)}
+            onDiscard={() => { setWarn(false); onClose(); }}
+          />
           <ConfirmDelete
             open={confirming}
             kind="event"
@@ -308,6 +324,10 @@ export function EventEditor({
       )}
     </AnimatePresence>
   );
+}
+
+function snap(title: string, date: string, start: string, end: string, tag: string, notes: string, allDay: boolean) {
+  return JSON.stringify([title, date, start, end, tag, notes, allDay]);
 }
 
 const inputCls =

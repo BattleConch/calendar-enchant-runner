@@ -104,6 +104,64 @@ export function ConfirmDelete({
   );
 }
 
+export function UnsavedChanges({
+  open,
+  onKeepEditing,
+  onDiscard,
+}: {
+  open: boolean;
+  onKeepEditing: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="uc-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onKeepEditing}
+            className="fixed inset-0 z-[60] bg-clay/50 backdrop-blur-sm"
+          />
+          <motion.div
+            key="uc-card"
+            initial={{ opacity: 0, scale: 0.94, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 6 }}
+            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+            role="alertdialog"
+            aria-modal="true"
+            className="fixed left-1/2 top-1/2 z-[61] w-[min(20rem,86vw)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-ivory p-6 text-center"
+            style={{ border: "1px solid var(--tag-red)", boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
+          >
+            <div className="font-serif text-xl text-clay">You have unsaved changes</div>
+            <div className="mt-6 flex gap-2">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={onKeepEditing}
+                className="flex-1 rounded-full py-3 text-sm font-medium text-clay-soft"
+                style={{ border: "1px solid var(--hairline)" }}
+              >
+                Keep editing
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { haptic(20); onDiscard(); }}
+                className="flex-1 rounded-full py-3 text-sm font-medium"
+                style={{ background: "var(--tag-red)", color: "var(--ivory)" }}
+              >
+                Discard
+              </motion.button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export function PreviewRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-3" style={{ borderBottom: "1px solid var(--hairline)" }}>
