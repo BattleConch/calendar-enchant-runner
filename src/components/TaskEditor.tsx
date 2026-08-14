@@ -4,6 +4,7 @@ import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useTasks, type Priority } from "@/lib/tasks-store";
 import { TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { haptic } from "@/lib/haptics";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 
