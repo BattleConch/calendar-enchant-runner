@@ -4,7 +4,7 @@ import { Pencil, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useTasks, type Priority } from "@/lib/tasks-store";
 import { TAG_STYLES, type TagColor } from "@/lib/events-store";
-import { ConfirmDelete, DetailActions, PreviewRow, TagBadge } from "./DetailChrome";
+import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 
 const TAGS: TagColor[] = ["blue", "green", "orange", "yellow", "teal", "pink", "purple", "red"];
@@ -30,10 +30,13 @@ export function TaskEditor({
 
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
+  const [warn, setWarn] = useState(false);
+  const [baseline, setBaseline] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setConfirming(false);
+    setWarn(false);
     setMode(existing ? "preview" : "edit");
     if (existing) {
       setTitle(existing.title);
@@ -41,17 +44,22 @@ export function TaskEditor({
       setTag(existing.tag);
       setPriority(existing.priority);
       setNotes(existing.notes ?? "");
+      setBaseline(snap(existing.title, existing.due ?? "", existing.tag, existing.priority, existing.notes ?? ""));
     } else {
       setTitle("");
       setDue("");
       setTag(undefined);
       setPriority("med");
       setNotes("");
+      setBaseline(snap("", "", undefined, "med", ""));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId]);
 
 
+
+  const dirty = mode === "edit" && snap(title, due, tag, priority, notes) !== baseline;
+  const attemptClose = () => { if (dirty) setWarn(true); else onClose(); };
 
   const save = () => {
     if (!title.trim()) return;
@@ -70,7 +78,7 @@ export function TaskEditor({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={attemptClose}
             className="fixed inset-0 z-40 bg-clay/40 backdrop-blur-sm"
           />
           <motion.div
@@ -82,9 +90,12 @@ export function TaskEditor({
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
-            onDragEnd={(_, info) => { if (info.offset.y > 120) onClose(); }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] overflow-hidden rounded-t-[2rem] bg-ivory"
-            style={{ boxShadow: "0 -20px 60px -20px rgba(74,63,53,0.35)" }}
+            onDragEnd={(_, info) => { if (info.offset.y > 120) attemptClose(); }}
+            className="fixed inset-x-0 bottom-0 z-50 flex h-[92dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
+            style={{
+              boxShadow: "0 -20px 60px -20px rgba(74,63,53,0.35)",
+              border: warn ? "2px solid var(--tag-red)" : "2px solid transparent",
+            }}
           >
             <div className="flex justify-center pt-3">
               <span className="h-1.5 w-10 rounded-full bg-hairline" />
@@ -96,14 +107,14 @@ export function TaskEditor({
               {mode === "preview" && existing ? (
                 <DetailActions onEdit={() => setMode("edit")} onDelete={() => setConfirming(true)} onClose={onClose} />
               ) : (
-                <button onClick={onClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover">
+                <button onClick={attemptClose} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover">
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
 
 
-            <div className="overflow-y-auto px-6 pb-6" style={{ maxHeight: "calc(92dvh - 60px)" }}>
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
               {mode === "preview" && existing ? (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -252,6 +263,11 @@ export function TaskEditor({
               )}
             </div>
           </motion.div>
+          <UnsavedChanges
+            open={warn}
+            onKeepEditing={() => setWarn(false)}
+            onDiscard={() => { setWarn(false); onClose(); }}
+          />
           <ConfirmDelete
             open={confirming}
             kind="task"
@@ -264,6 +280,10 @@ export function TaskEditor({
       )}
     </AnimatePresence>
   );
+}
+
+function snap(title: string, due: string, tag: string | undefined, priority: string, notes: string) {
+  return JSON.stringify([title, due, tag ?? null, priority, notes]);
 }
 
 function TagChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {

@@ -4,7 +4,7 @@ import { Camera, ImagePlus, Pencil, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNotes } from "@/lib/notes-store";
 import { TAG_STYLES, type TagColor } from "@/lib/events-store";
-import { ConfirmDelete, DetailActions, TagBadge } from "./DetailChrome";
+import { ConfirmDelete, DetailActions, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 import { filesToDataUrls } from "@/lib/images";
 import { haptic } from "@/lib/haptics";
@@ -34,21 +34,26 @@ export function NoteEditor({
 
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
+  const [warn, setWarn] = useState(false);
+  const [baseline, setBaseline] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setConfirming(false);
+    setWarn(false);
     setMode(existing ? "preview" : "edit");
     if (existing) {
       setTitle(existing.title);
       setBody(existing.body);
       setTag(existing.tag);
       setImages(existing.images ?? []);
+      setBaseline(snap(existing.title, existing.body, existing.tag, existing.images ?? []));
     } else {
       setTitle("");
       setBody("");
       setTag(undefined);
       setImages([]);
+      setBaseline(snap("", "", undefined, []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId]);
@@ -71,7 +76,8 @@ export function NoteEditor({
     onClose();
   };
 
-  const dismiss = () => { if (mode === "edit") save(); else onClose(); };
+  const dirty = mode === "edit" && snap(title, body, tag, images) !== baseline;
+  const dismiss = () => { if (dirty) setWarn(true); else onClose(); };
 
   return (
     <AnimatePresence>
@@ -96,7 +102,10 @@ export function NoteEditor({
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120) dismiss(); }}
             className="fixed inset-x-0 bottom-0 z-50 h-[92dvh] overflow-hidden rounded-t-[2rem] bg-ivory"
-            style={{ boxShadow: "0 -20px 60px -20px rgba(74,63,53,0.35)" }}
+            style={{
+              boxShadow: "0 -20px 60px -20px rgba(74,63,53,0.35)",
+              border: warn ? "2px solid var(--tag-red)" : "2px solid transparent",
+            }}
           >
             <div className="flex justify-center pt-3">
               <span className="h-1.5 w-10 rounded-full bg-hairline" />
@@ -108,7 +117,7 @@ export function NoteEditor({
               {mode === "preview" && existing ? (
                 <DetailActions onEdit={() => setMode("edit")} onDelete={() => setConfirming(true)} onClose={onClose} />
               ) : (
-                <button onClick={save} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover">
+                <button onClick={dismiss} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover">
                   <X className="h-4 w-4" />
                 </button>
               )}
@@ -267,6 +276,11 @@ export function NoteEditor({
             </div>
             )}
           </motion.div>
+          <UnsavedChanges
+            open={warn}
+            onKeepEditing={() => setWarn(false)}
+            onDiscard={() => { setWarn(false); onClose(); }}
+          />
           <ConfirmDelete
             open={confirming}
             kind="note"
@@ -279,6 +293,10 @@ export function NoteEditor({
       )}
     </AnimatePresence>
   );
+}
+
+function snap(title: string, body: string, tag: string | undefined, images: string[]) {
+  return JSON.stringify([title, body, tag ?? null, images]);
 }
 
 function TagChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
