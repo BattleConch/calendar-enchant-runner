@@ -123,7 +123,7 @@ export function UnsavedChanges({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onKeepEditing}
-            className="fixed inset-0 z-[60] bg-clay/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-clay/60 backdrop-blur-sm"
           />
           <motion.div
             key="uc-card"
@@ -133,8 +133,8 @@ export function UnsavedChanges({
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             role="alertdialog"
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 z-[61] w-[min(20rem,86vw)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-ivory p-6 text-center"
-            style={{ border: "1px solid var(--tag-red)", boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
+            className="fixed left-1/2 top-1/2 z-[61] w-[min(20rem,86vw)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface-hover p-6 text-center"
+            style={{ boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
           >
             <div className="font-serif text-xl text-clay">You have unsaved changes</div>
             <div className="mt-6 flex gap-2">
@@ -150,7 +150,7 @@ export function UnsavedChanges({
                 whileTap={{ scale: 0.97 }}
                 onClick={() => { haptic(20); onDiscard(); }}
                 className="flex-1 rounded-full py-3 text-sm font-medium"
-                style={{ background: "var(--tag-red)", color: "var(--ivory)" }}
+                style={{ background: "var(--tag-red-bg)", color: "var(--tag-red)" }}
               >
                 Discard
               </motion.button>

@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useTasks, type Priority } from "@/lib/tasks-store";
 import { TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { haptic } from "@/lib/haptics";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 
@@ -147,10 +148,14 @@ export function TaskEditor({
                   ) : null}
                   <motion.button
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setMode("edit")}
+                    onClick={() => {
+                      haptic(12);
+                      update(existing.id, { done: !existing.done });
+                      onClose();
+                    }}
                     className="mt-8 mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-clay py-4 font-medium text-ivory shadow-sm"
                   >
-                    <Pencil className="h-4 w-4" /> Edit task
+                    <Check className="h-4 w-4" /> {existing.done ? "Mark as not complete" : "Mark as complete"}
                   </motion.button>
                 </motion.div>
               ) : (
