@@ -151,16 +151,17 @@ export function EventEditor({
                       </p>
                     </div>
                   ) : null}
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setMode("edit")}
-                    className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-clay py-4 font-medium text-ivory shadow-sm"
-                  >
-                    <Pencil className="h-4 w-4" /> Edit event
-                  </motion.button>
                 </motion.div>
               ) : (
-              <>
+              <motion.div
+                key="edit"
+                layout
+                initial={{ opacity: 0, y: 14, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 14, scale: 0.985 }}
+                transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.8 }}
+              >
+
 
               <input
                 autoFocus
