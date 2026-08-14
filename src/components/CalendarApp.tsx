@@ -99,6 +99,7 @@ export function CalendarApp() {
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden bg-ivory pb-28">
+      <SyncStatus />
       {/* Header */}
       <header className="sticky top-0 z-30 bg-ivory/80 px-6 pt-12 pb-4 backdrop-blur-md">
         <AnimatePresence mode="wait">
