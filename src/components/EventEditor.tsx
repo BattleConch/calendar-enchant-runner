@@ -290,9 +290,10 @@ export function EventEditor({
                   {existing ? "Save changes" : "Add to calendar"}
                 </motion.button>
               </div>
-              </>
+              </motion.div>
               )}
-            </div>
+              </AnimatePresence>
+            </motion.div>
 
           </motion.div>
           <ConfirmDelete
