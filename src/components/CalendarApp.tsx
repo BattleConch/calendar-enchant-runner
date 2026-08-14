@@ -14,6 +14,7 @@ import { TaskEditor } from "./TaskEditor";
 import { NoteEditor } from "./NoteEditor";
 import { SettingsPage } from "./SettingsPage";
 import { BottomNav, type Tab } from "./BottomNav";
+import { SyncStatus } from "./SyncStatus";
 
 import { haptic } from "@/lib/haptics";
 
