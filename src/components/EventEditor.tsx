@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge } from "./DetailChrome";
@@ -93,7 +93,7 @@ export function EventEditor({
             dragElastic={{ top: 0, bottom: 0.7 }}
             dragTransition={{ bounceStiffness: 260, bounceDamping: 32 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) onClose(); }}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[96dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
+            className="fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
             style={{ boxShadow: "0 -24px 70px -24px rgba(74,63,53,0.45)" }}
           >
             <div className="shrink-0">
@@ -119,13 +119,16 @@ export function EventEditor({
 
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+            <motion.div layout className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+              <AnimatePresence mode="wait" initial={false}>
               {mode === "preview" && existing ? (
                 <motion.div
                   key="preview"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.22 }}
+                  layout
+                  initial={{ opacity: 0, y: 10, scale: 0.985 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.985 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.8 }}
                   className="pt-2"
                 >
                   <h2 className="font-serif text-3xl leading-tight tracking-tight text-clay">{existing.title}</h2>
@@ -148,16 +151,17 @@ export function EventEditor({
                       </p>
                     </div>
                   ) : null}
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setMode("edit")}
-                    className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-clay py-4 font-medium text-ivory shadow-sm"
-                  >
-                    <Pencil className="h-4 w-4" /> Edit event
-                  </motion.button>
                 </motion.div>
               ) : (
-              <>
+              <motion.div
+                key="edit"
+                layout
+                initial={{ opacity: 0, y: 14, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 14, scale: 0.985 }}
+                transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.8 }}
+              >
+
 
               <input
                 autoFocus
@@ -286,9 +290,10 @@ export function EventEditor({
                   {existing ? "Save changes" : "Add to calendar"}
                 </motion.button>
               </div>
-              </>
+              </motion.div>
               )}
-            </div>
+              </AnimatePresence>
+            </motion.div>
 
           </motion.div>
           <ConfirmDelete

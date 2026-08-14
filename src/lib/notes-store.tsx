@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
+import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
 import type { TagColor } from "./events-store";
 
@@ -77,10 +78,25 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(KEY, JSON.stringify(notes)); } catch {}
   }, [notes, hydrated, userId]);
 
+  useEffect(() => {
+    if (!userId) return;
+    const cached = readCache<Note>("notes", userId);
+    if (cached) setNotes(cached);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    writeCache("notes", userId, notes);
+  }, [notes, userId]);
+
   const refresh = useCallback(async () => {
     if (!userId) return;
-    const { data } = await supabase.from("notes").select("*").order("position");
-    if (data) setNotes((data as unknown as Row[]).map(fromRow));
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (pendingCount() > 0) return;
+    try {
+      const { data } = await supabase.from("notes").select("*").order("position");
+      if (data) setNotes((data as unknown as Row[]).map(fromRow));
+    } catch { /* offline */ }
   }, [userId]);
 
   useEffect(() => {
@@ -89,26 +105,30 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     return subscribeTable("notes", userId, () => { void refresh(); });
   }, [userId, refresh]);
 
+  useSyncOnReconnect(!!userId, refresh);
+
   const value = useMemo<Ctx>(() => ({
     notes,
     add: (n) => {
       const note: Note = { ...n, id: crypto.randomUUID(), updatedAt: Date.now() };
       setNotes((prev) => [note, ...prev]);
       if (userId) {
-        void supabase
-          .from("notes")
-          .insert({ id: note.id, user_id: userId, position: Date.now() * -1, ...toRow(note) } as never)
-          .then(() => refresh());
+        enqueue({
+          table: "notes",
+          op: "insert",
+          id: note.id,
+          payload: { id: note.id, user_id: userId, position: Date.now() * -1, ...toRow(note) },
+        });
       }
       return note;
     },
     update: (id, patch) => {
       setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)));
-      if (userId) void supabase.from("notes").update(toRow(patch) as never).eq("id", id);
+      if (userId) enqueue({ table: "notes", op: "update", id, payload: toRow(patch) });
     },
     remove: (id) => {
       setNotes((prev) => prev.filter((n) => n.id !== id));
-      if (userId) void supabase.from("notes").delete().eq("id", id);
+      if (userId) enqueue({ table: "notes", op: "delete", id });
     },
     reorder: (ids) => {
       setNotes((prev) => {
@@ -118,9 +138,7 @@ export function NotesProvider({ children }: { children: ReactNode }) {
         return next;
       });
       if (userId) {
-        ids.forEach((id, i) => {
-          void supabase.from("notes").update({ position: i } as never).eq("id", id);
-        });
+        ids.forEach((id, i) => enqueue({ table: "notes", op: "update", id, payload: { position: i } }));
       }
     },
   }), [notes, userId, refresh]);

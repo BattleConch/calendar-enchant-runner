@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
+import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
 
 export type TagColor = "blue" | "red" | "green" | "yellow" | "orange" | "teal" | "purple" | "pink";
@@ -94,11 +95,26 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(KEY, JSON.stringify(events)); } catch {}
   }, [events, hydrated, userId]);
 
-  // Cloud mode: load + realtime sync with the website and other devices.
+  // Cloud mode: offline-first — show the cached copy instantly, then refresh.
+  useEffect(() => {
+    if (!userId) return;
+    const cached = readCache<CalEvent>("events", userId);
+    if (cached) setEvents(cached);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    writeCache("events", userId, events);
+  }, [events, userId]);
+
   const refresh = useCallback(async () => {
     if (!userId) return;
-    const { data } = await supabase.from("events").select("*").order("date").order("start_time");
-    if (data) setEvents((data as unknown as Row[]).map(fromRow));
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (pendingCount() > 0) return; // don't clobber local changes waiting to sync
+    try {
+      const { data } = await supabase.from("events").select("*").order("date").order("start_time");
+      if (data) setEvents((data as unknown as Row[]).map(fromRow));
+    } catch { /* offline */ }
   }, [userId]);
 
   useEffect(() => {
@@ -107,23 +123,25 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     return subscribeTable("events", userId, () => { void refresh(); });
   }, [userId, refresh]);
 
+  useSyncOnReconnect(!!userId, refresh);
+
   const value = useMemo<Ctx>(() => ({
     events,
     add: (e) => {
       const ev = { ...e, id: crypto.randomUUID() };
       setEvents((prev) => [...prev, ev]);
       if (userId) {
-        void supabase.from("events").insert({ id: ev.id, user_id: userId, ...toRow(ev) } as never).then(() => refresh());
+        enqueue({ table: "events", op: "insert", id: ev.id, payload: { id: ev.id, user_id: userId, ...toRow(ev) } });
       }
       return ev;
     },
     update: (id, patch) => {
       setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
-      if (userId) void supabase.from("events").update(toRow(patch) as never).eq("id", id);
+      if (userId) enqueue({ table: "events", op: "update", id, payload: toRow(patch) });
     },
     remove: (id) => {
       setEvents((prev) => prev.filter((e) => e.id !== id));
-      if (userId) void supabase.from("events").delete().eq("id", id);
+      if (userId) enqueue({ table: "events", op: "delete", id });
     },
     byDate: (d) => events.filter((e) => e.date === d).sort((a, b) => a.start.localeCompare(b.start)),
   }), [events, userId, refresh]);

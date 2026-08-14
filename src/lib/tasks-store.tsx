@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
+import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
 import type { TagColor } from "./events-store";
 
@@ -85,10 +86,25 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch {}
   }, [tasks, hydrated, userId]);
 
+  useEffect(() => {
+    if (!userId) return;
+    const cached = readCache<Task>("tasks", userId);
+    if (cached) setTasks(cached);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    writeCache("tasks", userId, tasks);
+  }, [tasks, userId]);
+
   const refresh = useCallback(async () => {
     if (!userId) return;
-    const { data } = await supabase.from("tasks").select("*").order("position");
-    if (data) setTasks((data as unknown as Row[]).map(fromRow));
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (pendingCount() > 0) return;
+    try {
+      const { data } = await supabase.from("tasks").select("*").order("position");
+      if (data) setTasks((data as unknown as Row[]).map(fromRow));
+    } catch { /* offline */ }
   }, [userId]);
 
   useEffect(() => {
@@ -97,31 +113,35 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     return subscribeTable("tasks", userId, () => { void refresh(); });
   }, [userId, refresh]);
 
+  useSyncOnReconnect(!!userId, refresh);
+
   const value = useMemo<Ctx>(() => ({
     tasks,
     add: (t) => {
       const task: Task = { ...t, id: crypto.randomUUID(), done: false };
       setTasks((prev) => [task, ...prev]);
       if (userId) {
-        void supabase
-          .from("tasks")
-          .insert({ id: task.id, user_id: userId, position: Date.now() * -1, ...toRow(task) } as never)
-          .then(() => refresh());
+        enqueue({
+          table: "tasks",
+          op: "insert",
+          id: task.id,
+          payload: { id: task.id, user_id: userId, position: Date.now() * -1, ...toRow(task) },
+        });
       }
       return task;
     },
     update: (id, patch) => {
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
-      if (userId) void supabase.from("tasks").update(toRow(patch) as never).eq("id", id);
+      if (userId) enqueue({ table: "tasks", op: "update", id, payload: toRow(patch) });
     },
     toggle: (id) => {
       const next = !tasks.find((t) => t.id === id)?.done;
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: next } : t)));
-      if (userId) void supabase.from("tasks").update({ done: next } as never).eq("id", id);
+      if (userId) enqueue({ table: "tasks", op: "update", id, payload: { done: next } });
     },
     remove: (id) => {
       setTasks((prev) => prev.filter((t) => t.id !== id));
-      if (userId) void supabase.from("tasks").delete().eq("id", id);
+      if (userId) enqueue({ table: "tasks", op: "delete", id });
     },
     reorder: (ids) => {
       setTasks((prev) => {
@@ -131,9 +151,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         return next;
       });
       if (userId) {
-        ids.forEach((id, i) => {
-          void supabase.from("tasks").update({ position: i } as never).eq("id", id);
-        });
+        ids.forEach((id, i) => enqueue({ table: "tasks", op: "update", id, payload: { position: i } }));
       }
     },
   }), [tasks, userId, refresh]);
