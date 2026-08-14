@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge } from "./DetailChrome";
