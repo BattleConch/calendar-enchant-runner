@@ -119,13 +119,16 @@ export function EventEditor({
 
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+            <motion.div layout className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+              <AnimatePresence mode="wait" initial={false}>
               {mode === "preview" && existing ? (
                 <motion.div
                   key="preview"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.22 }}
+                  layout
+                  initial={{ opacity: 0, y: 10, scale: 0.985 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.985 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.8 }}
                   className="pt-2"
                 >
                   <h2 className="font-serif text-3xl leading-tight tracking-tight text-clay">{existing.title}</h2>
