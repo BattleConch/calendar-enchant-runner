@@ -17,6 +17,8 @@ export type Task = {
   reminders?: string[];
 };
 
+export type UndoState = { id: string; title: string } | null;
+
 type Ctx = {
   tasks: Task[];
   add: (t: Omit<Task, "id" | "done">) => Task;
@@ -24,7 +26,11 @@ type Ctx = {
   toggle: (id: string) => void;
   remove: (id: string) => void;
   reorder: (ids: string[]) => void;
+  lastCompleted: UndoState;
+  undoComplete: () => void;
+  dismissUndo: () => void;
 };
+
 
 const TasksContext = createContext<Ctx | null>(null);
 const KEY = "calendry.tasks.v1";
