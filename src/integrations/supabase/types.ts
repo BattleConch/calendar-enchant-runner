@@ -22,6 +22,7 @@ export type Database = {
           end_time: string
           id: string
           notes: string | null
+          reminders: string[]
           start_time: string
           tag: string
           title: string
@@ -35,6 +36,7 @@ export type Database = {
           end_time?: string
           id?: string
           notes?: string | null
+          reminders?: string[]
           start_time?: string
           tag?: string
           title?: string
@@ -48,6 +50,7 @@ export type Database = {
           end_time?: string
           id?: string
           notes?: string | null
+          reminders?: string[]
           start_time?: string
           tag?: string
           title?: string
@@ -101,6 +104,7 @@ export type Database = {
           notes: string | null
           position: number
           priority: string
+          reminders: string[]
           tag: string | null
           title: string
           updated_at: string
@@ -114,6 +118,7 @@ export type Database = {
           notes?: string | null
           position?: number
           priority?: string
+          reminders?: string[]
           tag?: string | null
           title?: string
           updated_at?: string
@@ -127,6 +132,7 @@ export type Database = {
           notes?: string | null
           position?: number
           priority?: string
+          reminders?: string[]
           tag?: string | null
           title?: string
           updated_at?: string
