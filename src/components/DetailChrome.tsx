@@ -113,7 +113,24 @@ export function UnsavedChanges({
   onKeepEditing: () => void;
   onDiscard: () => void;
 }) {
+  const keepRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(() => keepRef.current?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (e.shiftKey) onDiscard();
+        else onKeepEditing();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { cancelAnimationFrame(id); window.removeEventListener("keydown", onKey); };
+  }, [open, onKeepEditing, onDiscard]);
+
   return (
+
     <AnimatePresence>
       {open && (
         <>
