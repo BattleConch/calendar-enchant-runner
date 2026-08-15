@@ -6,6 +6,8 @@ import { useTasks, type Priority } from "@/lib/tasks-store";
 import { TAG_STYLES, type TagColor } from "@/lib/events-store";
 import { haptic } from "@/lib/haptics";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
+import { RemindersField } from "./RemindersField";
+import { TASK_REMINDERS } from "@/lib/notifications";
 
 
 const TAGS: TagColor[] = ["blue", "green", "orange", "yellow", "teal", "pink", "purple", "red"];
@@ -28,6 +30,7 @@ export function TaskEditor({
   const [tag, setTag] = useState<TagColor | undefined>(undefined);
   const [priority, setPriority] = useState<Priority>("med");
   const [notes, setNotes] = useState("");
+  const [reminders, setReminders] = useState<string[]>([]);
 
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
@@ -45,26 +48,28 @@ export function TaskEditor({
       setTag(existing.tag);
       setPriority(existing.priority);
       setNotes(existing.notes ?? "");
-      setBaseline(snap(existing.title, existing.due ?? "", existing.tag, existing.priority, existing.notes ?? ""));
+      setReminders(existing.reminders ?? []);
+      setBaseline(snap(existing.title, existing.due ?? "", existing.tag, existing.priority, existing.notes ?? "", existing.reminders ?? []));
     } else {
       setTitle("");
       setDue("");
       setTag(undefined);
       setPriority("med");
       setNotes("");
-      setBaseline(snap("", "", undefined, "med", ""));
+      setReminders([]);
+      setBaseline(snap("", "", undefined, "med", "", []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId]);
 
 
 
-  const dirty = mode === "edit" && snap(title, due, tag, priority, notes) !== baseline;
+  const dirty = mode === "edit" && snap(title, due, tag, priority, notes, reminders) !== baseline;
   const attemptClose = () => { if (dirty) setWarn(true); else onClose(); };
 
   const save = () => {
     if (!title.trim()) return;
-    const payload = { title, due: due || undefined, tag, priority, notes };
+    const payload = { title, due: due || undefined, tag, priority, notes, reminders: due ? reminders : [] };
     if (existing) update(existing.id, payload);
     else add(payload);
     onClose();
@@ -136,6 +141,14 @@ export function TaskEditor({
                       label="Due"
                       value={existing.due ? format(parseISO(existing.due), "EEEE, d MMM yyyy") : "No deadline"}
                     />
+                    {existing.reminders?.length ? (
+                      <PreviewRow
+                        label="Reminders"
+                        value={existing.reminders
+                          .map((r) => TASK_REMINDERS.find((o) => o.value === r)?.label ?? r)
+                          .join(" · ")}
+                      />
+                    ) : null}
                   </div>
                   {existing.notes?.trim() ? (
                     <div className="mt-6">
@@ -179,6 +192,14 @@ export function TaskEditor({
                   className="mt-2 w-full rounded-2xl bg-surface px-4 py-3 text-[15px] focus:outline-none focus:ring-1 focus:ring-clay/40"
                   style={{ border: "1px solid var(--hairline)", color: "var(--clay)" }}
                 />
+                <RemindersField
+                  value={reminders}
+                  onChange={setReminders}
+                  options={TASK_REMINDERS}
+                  disabled={!due}
+                  hint="Notifications arrive while Calendry is open on this device."
+                />
+                {!due && <div className="mt-2 text-[11px] text-clay-muted">Pick a due date to add reminders.</div>}
               </div>
 
               <div className="mt-6">
@@ -287,8 +308,8 @@ export function TaskEditor({
   );
 }
 
-function snap(title: string, due: string, tag: string | undefined, priority: string, notes: string) {
-  return JSON.stringify([title, due, tag ?? null, priority, notes]);
+function snap(title: string, due: string, tag: string | undefined, priority: string, notes: string, reminders: string[]) {
+  return JSON.stringify([title, due, tag ?? null, priority, notes, reminders]);
 }
 
 function TagChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {

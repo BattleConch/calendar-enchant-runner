@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import { requestNotificationPermission } from "@/lib/notifications";
 
 export function Splash() {
   return (
@@ -87,6 +88,7 @@ export function Splash() {
           >
             <Link
               to="/app"
+              onClick={() => { void requestNotificationPermission(); }}
               className="block w-full rounded-full bg-clay px-6 py-4 text-center font-medium text-ivory shadow-sm transition-transform active:scale-[0.98]"
             >
               Open your calendar

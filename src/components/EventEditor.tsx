@@ -4,6 +4,8 @@ import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
+import { RemindersField } from "./RemindersField";
+import { EVENT_REMINDERS } from "@/lib/notifications";
 
 
 const TAGS: TagColor[] = ["blue", "green", "orange", "yellow", "teal", "pink", "purple", "red"];
@@ -33,6 +35,7 @@ export function EventEditor({
   const [tag, setTag] = useState<TagColor>("blue");
   const [notes, setNotes] = useState("");
   const [allDay, setAllDay] = useState(false);
+  const [reminders, setReminders] = useState<string[]>([]);
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
   const [warn, setWarn] = useState(false);
@@ -51,7 +54,8 @@ export function EventEditor({
       setTag(existing.tag);
       setNotes(existing.notes ?? "");
       setAllDay(!!existing.allDay);
-      setBaseline(snap(existing.title, existing.date, existing.start, existing.end, existing.tag, existing.notes ?? "", !!existing.allDay));
+      setReminders(existing.reminders ?? []);
+      setBaseline(snap(existing.title, existing.date, existing.start, existing.end, existing.tag, existing.notes ?? "", !!existing.allDay, existing.reminders ?? []));
     } else {
       setTitle("");
       setDate(defaultDate);
@@ -60,21 +64,22 @@ export function EventEditor({
       setTag("blue");
       setNotes("");
       setAllDay(false);
-      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, "blue", "", false));
+      setReminders([]);
+      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, "blue", "", false, []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId, defaultDate, defaultStart, defaultEnd]);
 
 
 
-  const dirty = mode === "edit" && snap(title, date, start, end, tag, notes, allDay) !== baseline;
+  const dirty = mode === "edit" && snap(title, date, start, end, tag, notes, allDay, reminders) !== baseline;
   const attemptClose = () => { if (dirty) setWarn(true); else onClose(); };
 
   const save = () => {
     if (!title.trim()) return;
     const times = allDay ? { start: "00:00", end: "23:59" } : { start, end };
-    if (existing) update(existing.id, { title, date, ...times, tag, notes, allDay });
-    else add({ title, date, ...times, tag, notes, allDay });
+    if (existing) update(existing.id, { title, date, ...times, tag, notes, allDay, reminders });
+    else add({ title, date, ...times, tag, notes, allDay, reminders });
     onClose();
   };
 
@@ -152,6 +157,14 @@ export function EventEditor({
                       label="Time"
                       value={existing.allDay ? "All-day" : `${existing.start} – ${existing.end}`}
                     />
+                    {existing.reminders?.length ? (
+                      <PreviewRow
+                        label="Reminders"
+                        value={existing.reminders
+                          .map((r) => EVENT_REMINDERS.find((o) => o.value === r)?.label ?? r)
+                          .join(" · ")}
+                      />
+                    ) : null}
                   </div>
                   {existing.notes?.trim() ? (
                     <div className="mt-6">
@@ -244,6 +257,16 @@ export function EventEditor({
               </motion.button>
 
               <div className="mt-6">
+                <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Reminders</div>
+                <RemindersField
+                  value={reminders}
+                  onChange={setReminders}
+                  options={EVENT_REMINDERS}
+                  hint="Notifications arrive while Calendry is open on this device."
+                />
+              </div>
+
+              <div className="mt-6">
                 <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Tag</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {TAGS.map((t) => {
@@ -326,8 +349,8 @@ export function EventEditor({
   );
 }
 
-function snap(title: string, date: string, start: string, end: string, tag: string, notes: string, allDay: boolean) {
-  return JSON.stringify([title, date, start, end, tag, notes, allDay]);
+function snap(title: string, date: string, start: string, end: string, tag: string, notes: string, allDay: boolean, reminders: string[]) {
+  return JSON.stringify([title, date, start, end, tag, notes, allDay, reminders]);
 }
 
 const inputCls =

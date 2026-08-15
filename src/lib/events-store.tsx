@@ -15,6 +15,7 @@ export type CalEvent = {
   tag: TagColor;
   notes?: string;
   allDay?: boolean;
+  reminders?: string[];
 };
 
 type Ctx = {
@@ -45,7 +46,7 @@ function seed(): CalEvent[] {
 }
 
 type Row = {
-  id: string; title: string; date: string; start_time: string; end_time: string; tag: string; notes: string | null; all_day?: boolean | null;
+  id: string; title: string; date: string; start_time: string; end_time: string; tag: string; notes: string | null; all_day?: boolean | null; reminders?: string[] | null;
 };
 
 const fromRow = (r: Row): CalEvent => ({
@@ -57,6 +58,7 @@ const fromRow = (r: Row): CalEvent => ({
   tag: (r.tag as TagColor) ?? "blue",
   notes: r.notes ?? undefined,
   allDay: r.all_day ?? false,
+  reminders: r.reminders ?? [],
 });
 
 function toRow(e: Partial<CalEvent>) {
@@ -68,6 +70,7 @@ function toRow(e: Partial<CalEvent>) {
   if (e.tag !== undefined) row.tag = e.tag;
   if (e.notes !== undefined) row.notes = e.notes ?? null;
   if (e.allDay !== undefined) row.all_day = !!e.allDay;
+  if (e.reminders !== undefined) row.reminders = e.reminders ?? [];
   return row;
 }
 

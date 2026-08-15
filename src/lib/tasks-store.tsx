@@ -14,7 +14,10 @@ export type Task = {
   tag?: TagColor;
   priority: Priority;
   notes?: string;
+  reminders?: string[];
 };
+
+export type UndoState = { id: string; title: string } | null;
 
 type Ctx = {
   tasks: Task[];
@@ -23,7 +26,11 @@ type Ctx = {
   toggle: (id: string) => void;
   remove: (id: string) => void;
   reorder: (ids: string[]) => void;
+  lastCompleted: UndoState;
+  undoComplete: () => void;
+  dismissUndo: () => void;
 };
+
 
 const TasksContext = createContext<Ctx | null>(null);
 const KEY = "calendry.tasks.v1";
@@ -42,7 +49,7 @@ function seed(): Task[] {
 
 type Row = {
   id: string; title: string; done: boolean; due: string | null; tag: string | null;
-  priority: string; notes: string | null; position: number;
+  priority: string; notes: string | null; position: number; reminders?: string[] | null;
 };
 
 const fromRow = (r: Row): Task => ({
@@ -53,6 +60,7 @@ const fromRow = (r: Row): Task => ({
   tag: (r.tag as TagColor) ?? undefined,
   priority: (r.priority as Priority) ?? "med",
   notes: r.notes ?? undefined,
+  reminders: r.reminders ?? [],
 });
 
 function toRow(t: Partial<Task>) {
@@ -63,6 +71,7 @@ function toRow(t: Partial<Task>) {
   if (t.tag !== undefined) row.tag = t.tag ?? null;
   if (t.priority !== undefined) row.priority = t.priority;
   if (t.notes !== undefined) row.notes = t.notes ?? null;
+  if (t.reminders !== undefined) row.reminders = t.reminders ?? [];
   return row;
 }
 
@@ -71,6 +80,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const userId = user?.id ?? null;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [lastCompleted, setLastCompleted] = useState<UndoState>(null);
 
   useEffect(() => {
     if (userId) return;
@@ -131,13 +141,17 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       return task;
     },
     update: (id, patch) => {
+      const before = tasks.find((t) => t.id === id);
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
       if (userId) enqueue({ table: "tasks", op: "update", id, payload: toRow(patch) });
+      if (patch.done === true && before && !before.done) setLastCompleted({ id, title: before.title });
     },
     toggle: (id) => {
-      const next = !tasks.find((t) => t.id === id)?.done;
+      const before = tasks.find((t) => t.id === id);
+      const next = !before?.done;
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: next } : t)));
       if (userId) enqueue({ table: "tasks", op: "update", id, payload: { done: next } });
+      if (next && before) setLastCompleted({ id, title: before.title });
     },
     remove: (id) => {
       setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -154,7 +168,16 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         ids.forEach((id, i) => enqueue({ table: "tasks", op: "update", id, payload: { position: i } }));
       }
     },
-  }), [tasks, userId, refresh]);
+    lastCompleted,
+    undoComplete: () => {
+      if (!lastCompleted) return;
+      const { id } = lastCompleted;
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: false } : t)));
+      if (userId) enqueue({ table: "tasks", op: "update", id, payload: { done: false } });
+      setLastCompleted(null);
+    },
+    dismissUndo: () => setLastCompleted(null),
+  }), [tasks, userId, refresh, lastCompleted]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }
