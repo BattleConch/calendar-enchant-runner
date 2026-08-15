@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import { Pencil, Trash2, X } from "lucide-react";
 import { haptic } from "@/lib/haptics";
 
@@ -150,12 +151,16 @@ export function UnsavedChanges({
             transition={{ type: "spring", stiffness: 420, damping: 30 }}
             role="alertdialog"
             aria-modal="true"
+            aria-labelledby="unsaved-title"
             className="fixed left-1/2 top-1/2 z-[61] w-[min(20rem,86vw)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-surface-hover p-6 text-center"
             style={{ boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
           >
-            <div className="font-serif text-xl text-clay">You have unsaved changes</div>
+            <div id="unsaved-title" className="font-serif text-xl text-clay">You have unsaved changes</div>
+            <p className="mt-2 text-[12px] text-clay-soft">Press Esc to keep editing, Shift + Esc to discard.</p>
             <div className="mt-6 flex gap-2">
               <motion.button
+                ref={keepRef}
+                autoFocus
                 whileTap={{ scale: 0.97 }}
                 onClick={onKeepEditing}
                 className="flex-1 rounded-full py-3 text-sm font-medium text-clay-soft"

@@ -15,6 +15,8 @@ import { NoteEditor } from "./NoteEditor";
 import { SettingsPage } from "./SettingsPage";
 import { BottomNav, type Tab } from "./BottomNav";
 import { SyncStatus } from "./SyncStatus";
+import { UndoToast } from "./UndoToast";
+import { useReminderScheduler } from "@/lib/notifications";
 
 import { haptic } from "@/lib/haptics";
 
@@ -37,6 +39,8 @@ export function CalendarApp() {
   const { events, byDate } = useEvents();
   const { tasks } = useTasks();
   const [hintSeen, setHintSeen] = useState(true);
+
+  useReminderScheduler(events, tasks);
 
   useEffect(() => {
     try { setHintSeen(localStorage.getItem("calendry.swipeHint.seen") === "1"); } catch { setHintSeen(false); }
@@ -356,6 +360,7 @@ export function CalendarApp() {
         onClose={() => setTaskEditorOpen(false)}
         editingId={editingTaskId}
       />
+      <UndoToast />
       <NoteEditor
         open={noteEditorOpen}
         onClose={() => setNoteEditorOpen(false)}
