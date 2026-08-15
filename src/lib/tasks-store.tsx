@@ -14,6 +14,7 @@ export type Task = {
   tag?: TagColor;
   priority: Priority;
   notes?: string;
+  reminders?: string[];
 };
 
 type Ctx = {
@@ -42,7 +43,7 @@ function seed(): Task[] {
 
 type Row = {
   id: string; title: string; done: boolean; due: string | null; tag: string | null;
-  priority: string; notes: string | null; position: number;
+  priority: string; notes: string | null; position: number; reminders?: string[] | null;
 };
 
 const fromRow = (r: Row): Task => ({
@@ -53,6 +54,7 @@ const fromRow = (r: Row): Task => ({
   tag: (r.tag as TagColor) ?? undefined,
   priority: (r.priority as Priority) ?? "med",
   notes: r.notes ?? undefined,
+  reminders: r.reminders ?? [],
 });
 
 function toRow(t: Partial<Task>) {
@@ -63,6 +65,7 @@ function toRow(t: Partial<Task>) {
   if (t.tag !== undefined) row.tag = t.tag ?? null;
   if (t.priority !== undefined) row.priority = t.priority;
   if (t.notes !== undefined) row.notes = t.notes ?? null;
+  if (t.reminders !== undefined) row.reminders = t.reminders ?? [];
   return row;
 }
 
