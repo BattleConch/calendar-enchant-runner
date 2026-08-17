@@ -61,7 +61,7 @@ export function EventEditor({
       setDate(defaultDate);
       setStart(defaultStart);
       setEnd(defaultEnd);
-      setTag("blue");
+      setTag(undefined);
       setNotes("");
       setAllDay(false);
       setReminders([]);
