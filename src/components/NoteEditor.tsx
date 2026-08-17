@@ -101,7 +101,7 @@ export function NoteEditor({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120) dismiss(); }}
-            className="fixed inset-x-0 bottom-0 z-50 h-[92dvh] overflow-hidden rounded-t-[2rem] bg-ivory"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] min-h-[50dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
             style={{
               boxShadow: "0 -20px 60px -20px rgba(74,63,53,0.35)",
               border: warn ? "2px solid var(--tag-red)" : "2px solid transparent",
@@ -128,7 +128,7 @@ export function NoteEditor({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.22 }}
-                className="flex h-[calc(100%-60px)] flex-col overflow-y-auto px-6 pb-6"
+                className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6"
               >
                 {existing.tag && (
                   <div className="pt-2">
@@ -167,7 +167,7 @@ export function NoteEditor({
                 </motion.button>
               </motion.div>
             ) : (
-            <div className="flex h-[calc(100%-60px)] flex-col px-6 pb-6">
+            <div className="flex min-h-0 flex-1 flex-col px-6 pb-6">
 
               <input
                 autoFocus
