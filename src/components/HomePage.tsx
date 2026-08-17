@@ -1,8 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, Reorder, useDragControls } from "framer-motion";
 import { useEffect, useState } from "react";
 
 import { format, isSameDay, addDays, startOfWeek, parseISO } from "date-fns";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Plus, GripVertical, Check } from "lucide-react";
 import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
 import { useTasks } from "@/lib/tasks-store";
 import { useNotes } from "@/lib/notes-store";
@@ -11,6 +11,23 @@ import type { Tab } from "./BottomNav";
 
 const iso = (d: Date) => format(d, "yyyy-MM-dd");
 const dotOf = (tag?: TagColor) => (tag ? TAG_STYLES[tag].dot : "var(--clay-muted)");
+
+type WidgetId = "week" | "today" | "tasks" | "upcoming" | "notes";
+const DEFAULT_ORDER: WidgetId[] = ["week", "today", "tasks", "upcoming", "notes"];
+const ORDER_KEY = "calendry.home.order.v1";
+
+function loadOrder(): WidgetId[] {
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    if (!raw) return DEFAULT_ORDER;
+    const parsed = JSON.parse(raw) as WidgetId[];
+    const kept = parsed.filter((id) => DEFAULT_ORDER.includes(id));
+    for (const id of DEFAULT_ORDER) if (!kept.includes(id)) kept.push(id);
+    return kept;
+  } catch {
+    return DEFAULT_ORDER;
+  }
+}
 
 export function HomePage({
   goToTab,
@@ -36,22 +53,39 @@ export function HomePage({
   const now = new Date();
   const hour = now.getHours();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [order, setOrder] = useState<WidgetId[]>(DEFAULT_ORDER);
+  const [arranging, setArranging] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setOrder(loadOrder());
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch { /* ignore */ }
+  }, [order, mounted]);
+
   const greet = !mounted
     ? "Welcome back"
     : hour < 5 ? "Still up" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
-
-  const todayEvents = byDate(iso(now));
+  const todayIso = iso(now);
+  const todayEvents = byDate(todayIso);
+  const todayTasks = tasks.filter((t) => !t.done && t.due === todayIso);
   const nowMin = hour * 60 + now.getMinutes();
   const upcoming = events
     .filter((e) => {
-      if (e.date > iso(now)) return true;
-      if (e.date < iso(now)) return false;
+      if (e.date > todayIso) return true;
+      if (e.date < todayIso) return false;
       const [h, m] = e.start.split(":").map(Number);
       return h * 60 + m > nowMin;
     })
     .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+    .slice(0, 4);
+  const upcomingTasks = tasks
+    .filter((t) => !t.done && t.due && t.due > todayIso)
+    .sort((a, b) => (a.due ?? "").localeCompare(b.due ?? ""))
     .slice(0, 4);
 
   const pendingAll = tasks.filter((t) => !t.done);
@@ -59,35 +93,15 @@ export function HomePage({
   const recentNotes = notes.slice(0, 4);
   const week = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(now, { weekStartsOn: 0 }), i));
 
-  const stagger = (i: number) => ({
-    initial: { opacity: 0, y: 14 },
-    animate: { opacity: 1, y: 0 },
-    transition: { delay: 0.05 + i * 0.07, type: "spring" as const, stiffness: 240, damping: 26 },
-  });
+  const todayCount = todayEvents.length + todayTasks.length;
 
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.25 }}
-      className="space-y-4 px-4 pb-4"
-    >
-      <motion.div {...stagger(0)} className="px-2">
-        <div className="text-xs uppercase tracking-[0.24em] text-clay-soft">{greet}</div>
-        <div className="mt-1 text-sm text-clay-soft">
-          {todayEvents.length === 0
-            ? "No plans today — a clear page."
-            : `${todayEvents.length} ${todayEvents.length === 1 ? "thing" : "things"} on today.`}
-          {pendingAll.length > 0 && ` ${pendingAll.length} open ${pendingAll.length === 1 ? "task" : "tasks"}.`}
-        </div>
-      </motion.div>
-
-      {/* This week */}
-      <Widget index={1} title="This week">
+  const content: Record<WidgetId, { title: string; onGo?: () => void; body: React.ReactNode; footer?: React.ReactNode }> = {
+    week: {
+      title: "This week",
+      body: (
         <div className="grid grid-cols-7 gap-1.5">
           {week.map((d) => {
-            const count = byDate(iso(d)).length;
+            const count = byDate(iso(d)).length + tasks.filter((t) => !t.done && t.due === iso(d)).length;
             const today = isSameDay(d, now);
             return (
               <motion.button
@@ -112,128 +126,188 @@ export function HomePage({
             );
           })}
         </div>
-      </Widget>
+      ),
+    },
+    today: {
+      title: "Today",
+      onGo: () => goToTab("calendar"),
+      body: todayCount === 0 ? (
+        <Empty label="Nothing scheduled." />
+      ) : (
+        <div className="space-y-1.5">
+          {todayEvents.slice(0, 4).map((e) => (
+            <Row key={e.id} color={TAG_STYLES[e.tag].dot} title={e.title} sub={`${e.start} – ${e.end}`} onClick={() => onEditEvent(e.id)} />
+          ))}
+          {todayTasks.slice(0, 4).map((t) => (
+            <Row key={t.id} color={dotOf(t.tag)} title={t.title} sub="Due today" onClick={() => onEditTask(t.id)} check />
+          ))}
+        </div>
+      ),
+      footer: <DashedBtn label="Add event" onClick={onNewEvent} />,
+    },
+    tasks: {
+      title: "Tasks",
+      onGo: () => goToTab("tasks"),
+      body: pending.length === 0 ? (
+        <Empty label="All caught up." />
+      ) : (
+        <div className="space-y-1.5">
+          {pending.map((t) => (
+            <Row
+              key={t.id}
+              color={dotOf(t.tag)}
+              title={t.title}
+              sub={t.due ? format(parseISO(t.due), "EEE, MMM d") : undefined}
+              onClick={() => onEditTask(t.id)}
+              check
+            />
+          ))}
+          {pendingAll.length > pending.length && (
+            <button onClick={() => goToTab("tasks")} className="pl-3 pt-1 text-xs text-clay-muted">
+              +{pendingAll.length - pending.length} more
+            </button>
+          )}
+        </div>
+      ),
+      footer: <DashedBtn label="Add task" onClick={onNewTask} />,
+    },
+    upcoming: {
+      title: "Upcoming",
+      onGo: () => goToTab("calendar"),
+      body: upcoming.length === 0 && upcomingTasks.length === 0 ? (
+        <Empty label="The horizon is clear." />
+      ) : (
+        <div className="space-y-1.5">
+          {upcoming.map((e) => (
+            <Row
+              key={e.id}
+              color={TAG_STYLES[e.tag].dot}
+              title={e.title}
+              sub={`${format(parseISO(e.date), "EEE, MMM d")} · ${e.start}`}
+              onClick={() => onEditEvent(e.id)}
+            />
+          ))}
+          {upcomingTasks.map((t) => (
+            <Row
+              key={t.id}
+              color={dotOf(t.tag)}
+              title={t.title}
+              sub={`Due ${format(parseISO(t.due!), "EEE, MMM d")}`}
+              onClick={() => onEditTask(t.id)}
+              check
+            />
+          ))}
+        </div>
+      ),
+    },
+    notes: {
+      title: "Notes",
+      onGo: () => goToTab("notes"),
+      body: recentNotes.length === 0 ? (
+        <Empty label="No notes yet." />
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          {recentNotes.map((n) => (
+            <motion.button
+              key={n.id}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onEditNote(n.id)}
+              className="relative overflow-hidden rounded-2xl bg-surface-hover p-3 pl-4 text-left"
+              style={{ border: "1px solid var(--hairline)" }}
+            >
+              <span className="absolute left-0 top-0 h-full w-1.5" style={{ background: dotOf(n.tag) }} />
+              <div className="truncate font-serif text-base">{n.title || "Untitled"}</div>
+              {n.body && <div className="mt-0.5 line-clamp-2 text-[11px] text-clay-soft">{n.body}</div>}
+            </motion.button>
+          ))}
+        </div>
+      ),
+    },
+  };
 
-      {/* Today */}
-      <Widget index={2} title="Today" onGo={() => goToTab("calendar")}>
-        {todayEvents.length === 0 ? (
-          <Empty label="Nothing scheduled." />
-        ) : (
-          <div className="space-y-1.5">
-            {todayEvents.slice(0, 4).map((e) => (
-              <Row
-                key={e.id}
-                color={TAG_STYLES[e.tag].dot}
-                title={e.title}
-                sub={`${e.start} – ${e.end}`}
-                onClick={() => onEditEvent(e.id)}
-              />
-            ))}
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-4 px-4 pb-4"
+    >
+      <div className="flex items-end justify-between px-2">
+        <div>
+          <div className="text-xs uppercase tracking-[0.24em] text-clay-soft">{greet}</div>
+          <div className="mt-1 text-sm text-clay-soft">
+            {todayCount === 0
+              ? "No plans today — a clear page."
+              : `${todayCount} ${todayCount === 1 ? "thing" : "things"} on today.`}
+            {pendingAll.length > 0 && ` ${pendingAll.length} open ${pendingAll.length === 1 ? "task" : "tasks"}.`}
           </div>
-        )}
-        <DashedBtn label="Add event" onClick={onNewEvent} />
-      </Widget>
+        </div>
+        <button
+          onClick={() => { haptic(8); setArranging((a) => !a); }}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[11px] text-clay-soft"
+          style={{ border: "1px solid var(--hairline)" }}
+        >
+          {arranging ? <><Check className="h-3 w-3" /> Done</> : <><GripVertical className="h-3 w-3" /> Arrange</>}
+        </button>
+      </div>
 
-      {/* Tasks */}
-      <Widget index={3} title="Tasks" onGo={() => goToTab("tasks")}>
-        {pending.length === 0 ? (
-          <Empty label="All caught up." />
-        ) : (
-          <div className="space-y-1.5">
-            {pending.map((t) => (
-              <Row
-                key={t.id}
-                color={dotOf(t.tag)}
-                title={t.title}
-                sub={t.due ? format(parseISO(t.due), "EEE, MMM d") : undefined}
-                onClick={() => onEditTask(t.id)}
-                check
-              />
-            ))}
-            {pendingAll.length > pending.length && (
-              <button onClick={() => goToTab("tasks")} className="pl-3 pt-1 text-xs text-clay-muted">
-                +{pendingAll.length - pending.length} more
-              </button>
-            )}
-          </div>
-        )}
-        <DashedBtn label="Add task" onClick={onNewTask} />
-      </Widget>
-
-      {/* Upcoming */}
-      <Widget index={4} title="Upcoming" onGo={() => goToTab("calendar")}>
-        {upcoming.length === 0 ? (
-          <Empty label="The horizon is clear." />
-        ) : (
-          <div className="space-y-1.5">
-            {upcoming.map((e) => (
-              <Row
-                key={e.id}
-                color={TAG_STYLES[e.tag].dot}
-                title={e.title}
-                sub={`${format(parseISO(e.date), "EEE, MMM d")} · ${e.start}`}
-                onClick={() => onEditEvent(e.id)}
-              />
-            ))}
-          </div>
-        )}
-      </Widget>
-
-      {/* Notes */}
-      <Widget index={5} title="Notes" onGo={() => goToTab("notes")}>
-        {recentNotes.length === 0 ? (
-          <Empty label="No notes yet." />
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {recentNotes.map((n) => (
-              <motion.button
-                key={n.id}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onEditNote(n.id)}
-                className="relative overflow-hidden rounded-2xl bg-surface-hover p-3 pl-4 text-left"
-                style={{ border: "1px solid var(--hairline)" }}
-              >
-                <span className="absolute left-0 top-0 h-full w-1.5" style={{ background: dotOf(n.tag) }} />
-                <div className="truncate font-serif text-base">{n.title || "Untitled"}</div>
-                {n.body && <div className="mt-0.5 line-clamp-2 text-[11px] text-clay-soft">{n.body}</div>}
-              </motion.button>
-            ))}
-          </div>
-        )}
-      </Widget>
+      <Reorder.Group axis="y" values={order} onReorder={setOrder} className="space-y-4">
+        {order.map((id) => (
+          <WidgetItem key={id} id={id} arranging={arranging} {...content[id]} />
+        ))}
+      </Reorder.Group>
     </motion.section>
   );
 }
 
-function Widget({
-  index,
+function WidgetItem({
+  id,
+  arranging,
   title,
   onGo,
-  children,
+  body,
+  footer,
 }: {
-  index: number;
+  id: WidgetId;
+  arranging: boolean;
   title: string;
   onGo?: () => void;
-  children: React.ReactNode;
+  body: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
+  const controls = useDragControls();
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 + index * 0.07, type: "spring", stiffness: 240, damping: 26 }}
+    <Reorder.Item
+      value={id}
+      dragListener={false}
+      dragControls={controls}
       className="rounded-3xl bg-surface p-4"
       style={{ border: "1px solid var(--hairline)" }}
+      whileDrag={{ scale: 1.02, boxShadow: "0 18px 40px -20px rgba(74,63,53,0.45)" }}
     >
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-xs uppercase tracking-[0.2em] text-clay-soft">{title}</div>
-        {onGo && (
+        <div className="flex items-center gap-2">
+          {arranging && (
+            <button
+              aria-label={`Reorder ${title}`}
+              onPointerDown={(e) => { haptic(8); controls.start(e); }}
+              className="touch-none text-clay-muted"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
+          <div className="text-xs uppercase tracking-[0.2em] text-clay-soft">{title}</div>
+        </div>
+        {onGo && !arranging && (
           <button onClick={onGo} className="inline-flex items-center gap-1 text-xs text-clay-muted">
             Open <ArrowRight className="h-3 w-3" />
           </button>
         )}
       </div>
-      {children}
-    </motion.div>
+      {body}
+      {footer}
+    </Reorder.Item>
   );
 }
 
