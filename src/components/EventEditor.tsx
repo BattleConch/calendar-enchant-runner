@@ -109,7 +109,6 @@ export function EventEditor({
             dragTransition={{ bounceStiffness: 260, bounceDamping: 32 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) attemptClose(); }}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] min-h-[50dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
-            transition-layout=""
             style={{
               boxShadow: "0 -24px 70px -24px rgba(74,63,53,0.45)",
               border: warn ? "2px solid var(--tag-red)" : "2px solid transparent",
