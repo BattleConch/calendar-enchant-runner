@@ -32,7 +32,7 @@ export function EventEditor({
   const [date, setDate] = useState(defaultDate);
   const [start, setStart] = useState(defaultStart);
   const [end, setEnd] = useState(defaultEnd);
-  const [tag, setTag] = useState<TagColor>("blue");
+  const [tag, setTag] = useState<TagColor | undefined>(undefined);
   const [notes, setNotes] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [reminders, setReminders] = useState<string[]>([]);
@@ -97,6 +97,8 @@ export function EventEditor({
           />
           <motion.div
             key="sheet"
+            layout
+            layoutDependency={mode}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -107,6 +109,7 @@ export function EventEditor({
             dragTransition={{ bounceStiffness: 260, bounceDamping: 32 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120 || info.velocity.y > 600) attemptClose(); }}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] min-h-[50dvh] flex-col overflow-hidden rounded-t-[2rem] bg-ivory"
+            transition-layout=""
             style={{
               boxShadow: "0 -24px 70px -24px rgba(74,63,53,0.45)",
               border: warn ? "2px solid var(--tag-red)" : "2px solid transparent",
@@ -272,6 +275,7 @@ export function EventEditor({
               <div className="mt-6">
                 <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Tag</div>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <TagChip active={!tag} onClick={() => setTag(undefined)} label="None" />
                   {TAGS.map((t) => {
                     const s = TAG_STYLES[t];
                     const active = tag === t;
@@ -352,8 +356,8 @@ export function EventEditor({
   );
 }
 
-function snap(title: string, date: string, start: string, end: string, tag: string, notes: string, allDay: boolean, reminders: string[]) {
-  return JSON.stringify([title, date, start, end, tag, notes, allDay, reminders]);
+function snap(title: string, date: string, start: string, end: string, tag: string | undefined, notes: string, allDay: boolean, reminders: string[]) {
+  return JSON.stringify([title, date, start, end, tag ?? null, notes, allDay, reminders]);
 }
 
 const inputCls =
@@ -369,5 +373,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
         </span>
       </span>
     </label>
+  );
+}
+
+function TagChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <motion.button
+      whileTap={{ scale: 0.94 }}
+      onClick={onClick}
+      className="rounded-full px-3 py-1.5 text-xs font-medium"
+      style={{
+        background: active ? "var(--surface-hover)" : "transparent",
+        color: active ? "var(--clay)" : "var(--clay-soft)",
+        border: `1px solid ${active ? "var(--clay-muted)" : "var(--hairline)"}`,
+      }}
+    >
+      {label}
+    </motion.button>
   );
 }

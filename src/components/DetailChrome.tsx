@@ -156,7 +156,6 @@ export function UnsavedChanges({
             style={{ boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
           >
             <div id="unsaved-title" className="font-serif text-xl text-clay">You have unsaved changes</div>
-            <p className="mt-2 text-[12px] text-clay-soft">Press Esc to keep editing, Shift + Esc to discard.</p>
             <div className="mt-6 flex gap-2">
               <motion.button
                 ref={keepRef}
