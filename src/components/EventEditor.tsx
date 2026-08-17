@@ -148,9 +148,11 @@ export function EventEditor({
                   className="pt-2"
                 >
                   <h2 className="font-serif text-3xl leading-tight tracking-tight text-clay">{existing.title}</h2>
-                  <div className="mt-4">
-                    <TagBadge {...TAG_STYLES[existing.tag]} />
-                  </div>
+                  {existing.tag && (
+                    <div className="mt-4">
+                      <TagBadge {...TAG_STYLES[existing.tag]} />
+                    </div>
+                  )}
                   <div className="mt-5">
                     <PreviewRow label="Date" value={format(parseISO(existing.date), "EEEE, d MMM yyyy")} />
                     <PreviewRow
