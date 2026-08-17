@@ -65,7 +65,7 @@ export function EventEditor({
       setNotes("");
       setAllDay(false);
       setReminders([]);
-      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, "blue", "", false, []));
+      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, undefined, "", false, []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId, defaultDate, defaultStart, defaultEnd]);
