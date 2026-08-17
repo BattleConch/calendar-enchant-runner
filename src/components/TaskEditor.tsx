@@ -89,6 +89,8 @@ export function TaskEditor({
           />
           <motion.div
             key="sheet"
+            layout
+            layoutDependency={mode}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

@@ -32,7 +32,7 @@ export function EventEditor({
   const [date, setDate] = useState(defaultDate);
   const [start, setStart] = useState(defaultStart);
   const [end, setEnd] = useState(defaultEnd);
-  const [tag, setTag] = useState<TagColor>("blue");
+  const [tag, setTag] = useState<TagColor | undefined>(undefined);
   const [notes, setNotes] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [reminders, setReminders] = useState<string[]>([]);
@@ -61,11 +61,11 @@ export function EventEditor({
       setDate(defaultDate);
       setStart(defaultStart);
       setEnd(defaultEnd);
-      setTag("blue");
+      setTag(undefined);
       setNotes("");
       setAllDay(false);
       setReminders([]);
-      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, "blue", "", false, []));
+      setBaseline(snap("", defaultDate, defaultStart, defaultEnd, undefined, "", false, []));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingId, defaultDate, defaultStart, defaultEnd]);
@@ -97,6 +97,8 @@ export function EventEditor({
           />
           <motion.div
             key="sheet"
+            layout
+            layoutDependency={mode}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -148,9 +150,11 @@ export function EventEditor({
                   className="pt-2"
                 >
                   <h2 className="font-serif text-3xl leading-tight tracking-tight text-clay">{existing.title}</h2>
-                  <div className="mt-4">
-                    <TagBadge {...TAG_STYLES[existing.tag]} />
-                  </div>
+                  {existing.tag && (
+                    <div className="mt-4">
+                      <TagBadge {...TAG_STYLES[existing.tag]} />
+                    </div>
+                  )}
                   <div className="mt-5">
                     <PreviewRow label="Date" value={format(parseISO(existing.date), "EEEE, d MMM yyyy")} />
                     <PreviewRow
@@ -231,44 +235,46 @@ export function EventEditor({
                 </AnimatePresence>
               </div>
 
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setAllDay((v) => !v)}
-                className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-surface px-4 py-3 text-left"
-                style={{ border: "1px solid var(--hairline)" }}
-              >
-                <span
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-md transition-colors"
-                  style={{
-                    background: allDay ? "var(--clay)" : "transparent",
-                    border: `1.5px solid ${allDay ? "var(--clay)" : "var(--hairline)"}`,
-                  }}
+              <div className="mt-3 grid grid-cols-2 items-start gap-2">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setAllDay((v) => !v)}
+                  className="flex w-full items-center gap-2 rounded-2xl bg-surface px-3 py-3 text-left"
+                  style={{ border: "1px solid var(--hairline)" }}
                 >
-                  <AnimatePresence>
-                    {allDay && (
-                      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                        <Check className="h-3.5 w-3.5" strokeWidth={3} style={{ color: "var(--ivory)" }} />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </span>
-                <span className="text-[15px]">All-day event</span>
-              </motion.button>
+                  <span
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded-md transition-colors"
+                    style={{
+                      background: allDay ? "var(--clay)" : "transparent",
+                      border: `1.5px solid ${allDay ? "var(--clay)" : "var(--hairline)"}`,
+                    }}
+                  >
+                    <AnimatePresence>
+                      {allDay && (
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                          <Check className="h-3.5 w-3.5" strokeWidth={3} style={{ color: "var(--ivory)" }} />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </span>
+                  <span className="text-[15px]">All-day</span>
+                </motion.button>
 
-              <div className="mt-6">
-                <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Reminders</div>
-                <RemindersField
-                  value={reminders}
-                  onChange={setReminders}
-                  options={EVENT_REMINDERS}
-                  hint="Notifications arrive while Calendry is open on this device."
-                />
+                <div className="[&>div]:mt-0">
+                  <RemindersField
+                    value={reminders}
+                    onChange={setReminders}
+                    options={EVENT_REMINDERS}
+                    hint="Notifications arrive while Calendry is open on this device."
+                  />
+                </div>
               </div>
 
               <div className="mt-6">
                 <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Tag</div>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <TagChip active={!tag} onClick={() => setTag(undefined)} label="None" />
                   {TAGS.map((t) => {
                     const s = TAG_STYLES[t];
                     const active = tag === t;
@@ -349,8 +355,8 @@ export function EventEditor({
   );
 }
 
-function snap(title: string, date: string, start: string, end: string, tag: string, notes: string, allDay: boolean, reminders: string[]) {
-  return JSON.stringify([title, date, start, end, tag, notes, allDay, reminders]);
+function snap(title: string, date: string, start: string, end: string, tag: string | undefined, notes: string, allDay: boolean, reminders: string[]) {
+  return JSON.stringify([title, date, start, end, tag ?? null, notes, allDay, reminders]);
 }
 
 const inputCls =
@@ -366,5 +372,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
         </span>
       </span>
     </label>
+  );
+}
+
+function TagChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <motion.button
+      whileTap={{ scale: 0.94 }}
+      onClick={onClick}
+      className="rounded-full px-3 py-1.5 text-xs font-medium"
+      style={{
+        background: active ? "var(--surface-hover)" : "transparent",
+        color: active ? "var(--clay)" : "var(--clay-soft)",
+        border: `1px solid ${active ? "var(--clay-muted)" : "var(--hairline)"}`,
+      }}
+    >
+      {label}
+    </motion.button>
   );
 }

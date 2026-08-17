@@ -12,7 +12,7 @@ export type CalEvent = {
   date: string; // yyyy-MM-dd
   start: string; // HH:mm
   end: string; // HH:mm
-  tag: TagColor;
+  tag?: TagColor;
   notes?: string;
   allDay?: boolean;
   reminders?: string[];
@@ -55,7 +55,7 @@ const fromRow = (r: Row): CalEvent => ({
   date: r.date,
   start: r.start_time.slice(0, 5),
   end: r.end_time.slice(0, 5),
-  tag: (r.tag as TagColor) ?? "blue",
+  tag: (r.tag ? (r.tag as TagColor) : undefined),
   notes: r.notes ?? undefined,
   allDay: r.all_day ?? false,
   reminders: r.reminders ?? [],
@@ -67,7 +67,7 @@ function toRow(e: Partial<CalEvent>) {
   if (e.date !== undefined) row.date = e.date;
   if (e.start !== undefined) row.start_time = e.start;
   if (e.end !== undefined) row.end_time = e.end;
-  if (e.tag !== undefined) row.tag = e.tag;
+  if (e.tag !== undefined) row.tag = e.tag ?? "";
   if (e.notes !== undefined) row.notes = e.notes ?? null;
   if (e.allDay !== undefined) row.all_day = !!e.allDay;
   if (e.reminders !== undefined) row.reminders = e.reminders ?? [];
@@ -179,4 +179,14 @@ export const TAG_STYLES: Record<TagColor, TagStyle> = {
   purple: tagStyle("purple", "Study"),
   pink:   tagStyle("pink", "Joy"),
 };
+
+export const NO_TAG_STYLE: TagStyle = {
+  bg: "var(--surface-hover)",
+  text: "var(--clay-soft)",
+  dot: "var(--clay-muted)",
+  ring: "var(--hairline)",
+  label: "None",
+};
+
+export const tagStyleOf = (tag?: TagColor): TagStyle => (tag ? TAG_STYLES[tag] : NO_TAG_STYLE);
 

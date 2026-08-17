@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { addMonths, addDays, format, isSameDay, isSameMonth, startOfMonth, startOfWeek, endOfMonth, endOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useEvents, TAG_STYLES } from "@/lib/events-store";
+import { useEvents, TAG_STYLES, tagStyleOf } from "@/lib/events-store";
 import { useTasks } from "@/lib/tasks-store";
 import { DaySheet, SwipeHint } from "./DaySheet";
 import { EventEditor } from "./EventEditor";
@@ -74,7 +74,7 @@ export function CalendarApp() {
       arr.push(dot);
       set.set(date, arr);
     };
-    for (const e of events) push(e.date, { color: TAG_STYLES[e.tag].dot, hollow: false });
+    for (const e of events) push(e.date, { color: tagStyleOf(e.tag).dot, hollow: false });
     // tasks read as hollow rings so they never look like events
     for (const t of tasks) {
       if (!t.due || t.done) continue;
@@ -277,7 +277,7 @@ export function CalendarApp() {
                   )}
                   <AnimatePresence initial={false}>
                     {selectedEvents.slice(0, 3).map((e, i) => {
-                      const s = TAG_STYLES[e.tag];
+                      const s = tagStyleOf(e.tag);
                       return (
                         <motion.button
                           key={e.id}

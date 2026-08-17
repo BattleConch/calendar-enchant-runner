@@ -136,7 +136,7 @@ export function HomePage({
       ) : (
         <div className="space-y-1.5">
           {todayEvents.slice(0, 4).map((e) => (
-            <Row key={e.id} color={TAG_STYLES[e.tag].dot} title={e.title} sub={`${e.start} – ${e.end}`} onClick={() => onEditEvent(e.id)} />
+            <Row key={e.id} color={dotOf(e.tag)} title={e.title} sub={`${e.start} – ${e.end}`} onClick={() => onEditEvent(e.id)} />
           ))}
           {todayTasks.slice(0, 4).map((t) => (
             <Row key={t.id} color={dotOf(t.tag)} title={t.title} sub="Due today" onClick={() => onEditTask(t.id)} check />
@@ -181,7 +181,7 @@ export function HomePage({
           {upcoming.map((e) => (
             <Row
               key={e.id}
-              color={TAG_STYLES[e.tag].dot}
+              color={dotOf(e.tag)}
               title={e.title}
               sub={`${format(parseISO(e.date), "EEE, MMM d")} · ${e.start}`}
               onClick={() => onEditEvent(e.id)}
