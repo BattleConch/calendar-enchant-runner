@@ -231,39 +231,40 @@ export function EventEditor({
                 </AnimatePresence>
               </div>
 
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setAllDay((v) => !v)}
-                className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-surface px-4 py-3 text-left"
-                style={{ border: "1px solid var(--hairline)" }}
-              >
-                <span
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-md transition-colors"
-                  style={{
-                    background: allDay ? "var(--clay)" : "transparent",
-                    border: `1.5px solid ${allDay ? "var(--clay)" : "var(--hairline)"}`,
-                  }}
+              <div className="mt-3 grid grid-cols-2 items-start gap-2">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setAllDay((v) => !v)}
+                  className="flex w-full items-center gap-2 rounded-2xl bg-surface px-3 py-3 text-left"
+                  style={{ border: "1px solid var(--hairline)" }}
                 >
-                  <AnimatePresence>
-                    {allDay && (
-                      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                        <Check className="h-3.5 w-3.5" strokeWidth={3} style={{ color: "var(--ivory)" }} />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </span>
-                <span className="text-[15px]">All-day event</span>
-              </motion.button>
+                  <span
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded-md transition-colors"
+                    style={{
+                      background: allDay ? "var(--clay)" : "transparent",
+                      border: `1.5px solid ${allDay ? "var(--clay)" : "var(--hairline)"}`,
+                    }}
+                  >
+                    <AnimatePresence>
+                      {allDay && (
+                        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                          <Check className="h-3.5 w-3.5" strokeWidth={3} style={{ color: "var(--ivory)" }} />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </span>
+                  <span className="text-[15px]">All-day</span>
+                </motion.button>
 
-              <div className="mt-6">
-                <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Reminders</div>
-                <RemindersField
-                  value={reminders}
-                  onChange={setReminders}
-                  options={EVENT_REMINDERS}
-                  hint="Notifications arrive while Calendry is open on this device."
-                />
+                <div className="[&>div]:mt-0">
+                  <RemindersField
+                    value={reminders}
+                    onChange={setReminders}
+                    options={EVENT_REMINDERS}
+                    hint="Notifications arrive while Calendry is open on this device."
+                  />
+                </div>
               </div>
 
               <div className="mt-6">
