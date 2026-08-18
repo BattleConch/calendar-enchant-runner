@@ -67,7 +67,7 @@ function toRow(e: Partial<CalEvent>) {
   if (e.date !== undefined) row.date = e.date;
   if (e.start !== undefined) row.start_time = e.start;
   if (e.end !== undefined) row.end_time = e.end;
-  if (e.tag !== undefined) row.tag = e.tag ?? "";
+  if ("tag" in e) row.tag = e.tag ?? "";
   if (e.notes !== undefined) row.notes = e.notes ?? null;
   if (e.allDay !== undefined) row.all_day = !!e.allDay;
   if (e.reminders !== undefined) row.reminders = e.reminders ?? [];
