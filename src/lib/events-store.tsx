@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
 import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
+import { adoptLocalData } from "./adopt-local";
 
 export type TagColor = "blue" | "red" | "green" | "yellow" | "orange" | "teal" | "purple" | "pink";
 
@@ -115,6 +116,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
     if (pendingCount() > 0) return; // don't clobber local changes waiting to sync
     try {
+      await adoptLocalData(userId);
       const { data } = await supabase.from("events").select("*").order("date").order("start_time");
       if (data) setEvents((data as unknown as Row[]).map(fromRow));
     } catch { /* offline */ }

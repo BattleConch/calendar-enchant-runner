@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
 import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
+import { adoptLocalData } from "./adopt-local";
 import type { TagColor } from "./events-store";
 
 export type Priority = "low" | "med" | "high";
@@ -112,6 +113,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
     if (pendingCount() > 0) return;
     try {
+      await adoptLocalData(userId);
       const { data } = await supabase.from("tasks").select("*").order("position");
       if (data) setTasks((data as unknown as Row[]).map(fromRow));
     } catch { /* offline */ }

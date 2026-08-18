@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
 import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
+import { adoptLocalData } from "./adopt-local";
 import type { TagColor } from "./events-store";
 
 export type Note = {
@@ -94,6 +95,7 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
     if (pendingCount() > 0) return;
     try {
+      await adoptLocalData(userId);
       const { data } = await supabase.from("notes").select("*").order("position");
       if (data) setNotes((data as unknown as Row[]).map(fromRow));
     } catch { /* offline */ }
