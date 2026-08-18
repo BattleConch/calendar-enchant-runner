@@ -8,6 +8,8 @@ type Ctx = {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<{ error?: string }>;
+  signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ error?: string; needsConfirmation?: boolean }>;
   signOut: () => Promise<void>;
 };
 
