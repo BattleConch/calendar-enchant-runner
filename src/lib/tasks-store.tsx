@@ -68,7 +68,7 @@ function toRow(t: Partial<Task>) {
   if (t.title !== undefined) row.title = t.title;
   if (t.done !== undefined) row.done = t.done;
   if (t.due !== undefined) row.due = t.due ?? null;
-  if (t.tag !== undefined) row.tag = t.tag ?? null;
+  if ("tag" in t) row.tag = t.tag ?? null;
   if (t.priority !== undefined) row.priority = t.priority;
   if (t.notes !== undefined) row.notes = t.notes ?? null;
   if (t.reminders !== undefined) row.reminders = t.reminders ?? [];

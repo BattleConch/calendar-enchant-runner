@@ -54,7 +54,7 @@ function toRow(n: Partial<Note>) {
   if (n.title !== undefined) row.title = n.title;
   if (n.body !== undefined) row.body = n.body;
   if (n.images !== undefined) row.images = n.images ?? [];
-  if (n.tag !== undefined) row.tag = n.tag ?? null;
+  if ("tag" in n) row.tag = n.tag ?? null;
   return row;
 }
 
