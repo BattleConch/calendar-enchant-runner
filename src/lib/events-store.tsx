@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { subscribeTable } from "./cloud";
 import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from "./offline";
 import { useAuth } from "./auth";
+import { adoptLocalData } from "./adopt-local";
 
 export type TagColor = "blue" | "red" | "green" | "yellow" | "orange" | "teal" | "purple" | "pink";
 
