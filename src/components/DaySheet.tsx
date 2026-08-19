@@ -43,22 +43,30 @@ export function DaySheet({
             dragListener={false}
             dragControls={dragControls}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.7 }}
-            dragTransition={{ bounceStiffness: 260, bounceDamping: 32 }}
+            dragElastic={{ top: 0.02, bottom: 1 }}
+            dragTransition={{ bounceStiffness: 420, bounceDamping: 40 }}
+            dragMomentum={false}
             onDragEnd={(_, info) => {
-              if (info.offset.y > 120 || info.velocity.y > 600) { haptic(10); onClose(); }
+              if (info.offset.y > 110 || info.velocity.y > 500) { haptic([12, 26]); onClose(); }
+              else haptic(6);
             }}
-            transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.9 }}
+            transition={{ type: "spring", stiffness: 320, damping: 34, mass: 0.8 }}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col overflow-hidden rounded-t-[2rem] bg-surface"
             style={{ border: "1px solid var(--hairline)", boxShadow: "0 -20px 60px -30px rgba(74,63,53,0.5)" }}
           >
             <div className="shrink-0 pt-3">
               <div
-                onPointerDown={(e) => dragControls.start(e)}
-                className="mx-auto flex h-6 w-24 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+                onPointerDown={(e) => { haptic(9); dragControls.start(e); }}
+                className="mx-auto flex h-8 w-28 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
               >
-                <div className="h-1.5 w-12 rounded-full" style={{ background: "var(--hairline)" }} />
+                <motion.div
+                  whileTap={{ scaleX: 1.25, opacity: 0.9 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="h-1.5 w-12 rounded-full"
+                  style={{ background: "var(--hairline)" }}
+                />
               </div>
+
 
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
