@@ -5,7 +5,7 @@ import { enqueue, pendingCount, readCache, useSyncOnReconnect, writeCache } from
 import { useAuth } from "./auth";
 import { adoptLocalData } from "./adopt-local";
 
-export type TagColor = "blue" | "red" | "green" | "yellow" | "orange" | "teal" | "purple" | "pink";
+export type TagColor = string;
 
 export type CalEvent = {
   id: string;
@@ -163,7 +163,7 @@ export function useEvents() {
 
 export type TagStyle = { bg: string; text: string; dot: string; ring: string; label: string };
 
-const tagStyle = (key: TagColor, label: string): TagStyle => ({
+const tagStyle = (key: string, label: string): TagStyle => ({
   bg: `var(--tag-${key}-bg)`,
   text: `var(--tag-${key})`,
   dot: `var(--tag-${key})`,
@@ -171,7 +171,7 @@ const tagStyle = (key: TagColor, label: string): TagStyle => ({
   label,
 });
 
-export const TAG_STYLES: Record<TagColor, TagStyle> = {
+export const TAG_STYLES: Record<string, TagStyle> = {
   blue:   tagStyle("blue", "Focus"),
   red:    tagStyle("red", "Urgent"),
   green:  tagStyle("green", "Health"),
@@ -190,5 +190,5 @@ export const NO_TAG_STYLE: TagStyle = {
   label: "None",
 };
 
-export const tagStyleOf = (tag?: TagColor): TagStyle => (tag ? TAG_STYLES[tag] : NO_TAG_STYLE);
+export const tagStyleOf = (tag?: TagColor): TagStyle => (tag ? (TAG_STYLES[tag] ?? NO_TAG_STYLE) : NO_TAG_STYLE);
 
