@@ -205,7 +205,7 @@ export function AgendaSheet({
                       key={e.id}
                       layout
                       whileTap={{ scale: 0.96 }}
-                      onClick={() => onEdit(e.id)}
+                      onClick={() => { haptic(10); onEdit(e.id); }}
                       className="max-w-full truncate rounded-full px-3 py-1.5 text-xs"
                       style={{ background: s.bg, color: s.text, border: `1px solid ${s.ring}` }}
                     >
@@ -220,7 +220,7 @@ export function AgendaSheet({
                       key={t.id}
                       layout
                       whileTap={{ scale: 0.96 }}
-                      onClick={() => onEditTask?.(t.id)}
+                      onClick={() => { haptic(10); onEditTask?.(t.id); }}
                       className="flex max-w-full items-center gap-1.5 rounded-full px-3 py-1.5 text-xs"
                       style={{
                         background: "transparent",
@@ -343,7 +343,7 @@ export function AgendaSheet({
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.04, type: "spring", stiffness: 220, damping: 24 }}
-                      onClick={() => onEdit(e.id)}
+                      onClick={() => { haptic(10); onEdit(e.id); }}
                       className="absolute left-14 right-2 flex flex-col items-start justify-center overflow-hidden rounded-2xl px-3 text-left"
                       style={{ top, height, paddingTop: tiny ? 2 : 6, paddingBottom: tiny ? 2 : 6, background: s.bg, color: s.text, border: `1px solid ${s.dot}22` }}
                     >
