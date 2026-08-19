@@ -61,11 +61,12 @@ export function AgendaSheet({
   const hasAllDay = allDayEvents.length > 0 || floatingTasks.length > 0;
   const hours = Array.from({ length: HOURS }, (_, i) => i + DAY_START);
 
-  const goWeek = (delta: number) => {
-    haptic(8);
+  const goDay = (delta: number) => {
+    haptic([6, 18]);
     setDir(delta);
-    setSelected(addDays(selected, delta * 7));
+    setSelected(addDays(selected, delta));
   };
+
 
   /* ---- press-and-hold on a time slot to draw a new event ---- */
   const gridRef = useRef<HTMLDivElement>(null);
@@ -129,9 +130,10 @@ export function AgendaSheet({
     >
       {/* Week strip — arrows move a whole week, sweeping in from the side */}
       <div className="flex items-center gap-2 py-2">
-        <ArrowBtn label="Previous week" onClick={() => goWeek(-1)}>
+        <ArrowBtn label="Previous day" onClick={() => goDay(-1)}>
           <ChevronLeft className="h-5 w-5" />
         </ArrowBtn>
+
 
         <div className="relative flex-1 overflow-hidden">
           <AnimatePresence mode="popLayout" initial={false} custom={dir}>
@@ -156,7 +158,7 @@ export function AgendaSheet({
                   <motion.button
                     key={iso(d)}
                     whileTap={{ scale: 0.94 }}
-                    onClick={() => { haptic(6); setDir(d > selected ? 1 : -1); setSelected(d); }}
+                    onClick={() => { haptic([5, 12]); setDir(d > selected ? 1 : -1); setSelected(d); }}
                     className="relative flex flex-col items-center gap-1 rounded-2xl px-1 py-2.5"
                     style={{
                       background: active ? "var(--clay)" : "var(--surface)",
@@ -177,9 +179,10 @@ export function AgendaSheet({
           </AnimatePresence>
         </div>
 
-        <ArrowBtn label="Next week" onClick={() => goWeek(1)}>
+        <ArrowBtn label="Next day" onClick={() => goDay(1)}>
           <ChevronRight className="h-5 w-5" />
         </ArrowBtn>
+
       </div>
 
       {/* All-day lane — untimed events and deadline-free tasks */}
