@@ -1,12 +1,15 @@
 import { motion, Reorder, useDragControls } from "framer-motion";
 import { useNotes, type Note } from "@/lib/notes-store";
-import { TAG_STYLES } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
+import { TagFilter, useTagFilter } from "./TagFilter";
 import { formatDistanceToNow } from "date-fns";
 import { GripVertical } from "lucide-react";
 import { haptic } from "@/lib/haptics";
 
 export function NotesPage({ onEdit }: { onEdit: (id: string | null) => void }) {
   const { notes, reorder } = useNotes();
+  const { selected, setSelected, matches } = useTagFilter("calendry.notes.tagfilter.v1");
+  const shown = notes.filter((n) => matches(n.tag));
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -15,26 +18,29 @@ export function NotesPage({ onEdit }: { onEdit: (id: string | null) => void }) {
       transition={{ duration: 0.25 }}
       className="px-5"
     >
-      <div className="pt-1 pb-4">
-        <div className="text-xs uppercase tracking-[0.24em] text-clay-soft">Journal</div>
-        <p className="mt-1 text-sm text-clay-soft">
-          {notes.length} note{notes.length === 1 ? "" : "s"} · hold to drag
-        </p>
+      <div className="flex items-start justify-between gap-2 pt-1 pb-4">
+        <div>
+          <div className="text-xs uppercase tracking-[0.24em] text-clay-soft">Journal</div>
+          <p className="mt-1 text-sm text-clay-soft">
+            {shown.length} note{shown.length === 1 ? "" : "s"} · hold to drag
+          </p>
+        </div>
+        <TagFilter selected={selected} onChange={setSelected} />
       </div>
 
-      {notes.length === 0 ? (
+      {shown.length === 0 ? (
         <div className="rounded-3xl bg-surface px-6 py-10 text-center text-sm text-clay-muted"
           style={{ border: "1px solid var(--hairline)" }}>
-          A blank page. Tap + to begin.
+          {notes.length === 0 ? "A blank page. Tap + to begin." : "No notes with those tags."}
         </div>
       ) : (
         <Reorder.Group
           axis="y"
-          values={notes}
-          onReorder={(next) => reorder(next.map((n) => n.id))}
+          values={shown}
+          onReorder={(next) => reorder([...next.map((n) => n.id), ...notes.filter((n) => !matches(n.tag)).map((n) => n.id)])}
           className="grid grid-cols-2 gap-3"
         >
-          {notes.map((n) => (
+          {shown.map((n) => (
             <NoteCard key={n.id} n={n} onEdit={() => onEdit(n.id)} />
           ))}
         </Reorder.Group>
@@ -44,7 +50,8 @@ export function NotesPage({ onEdit }: { onEdit: (id: string | null) => void }) {
 }
 
 function NoteCard({ n, onEdit }: { n: Note; onEdit: () => void }) {
-  const s = n.tag ? TAG_STYLES[n.tag] : null;
+  const { styleOf } = useTags();
+  const s = n.tag ? styleOf(n.tag) : null;
   const controls = useDragControls();
   return (
     <Reorder.Item

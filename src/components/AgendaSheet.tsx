@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format, isSameDay, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEvents, TAG_STYLES, tagStyleOf } from "@/lib/events-store";
+import { useEvents, tagStyleOf } from "@/lib/events-store";
 import { useTasks } from "@/lib/tasks-store";
 import { useEffect, useRef, useState } from "react";
 import { haptic } from "@/lib/haptics";
@@ -214,7 +214,7 @@ export function AgendaSheet({
                   );
                 })}
                 {floatingTasks.map((t) => {
-                  const s = t.tag ? TAG_STYLES[t.tag] : null;
+                  const s = t.tag ? tagStyleOf(t.tag) : null;
                   return (
                     <motion.button
                       key={t.id}

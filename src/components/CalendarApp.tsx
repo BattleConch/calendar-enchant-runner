@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { addMonths, addDays, format, isSameDay, isSameMonth, startOfMonth, startOfWeek, endOfMonth, endOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useEvents, TAG_STYLES, tagStyleOf } from "@/lib/events-store";
+import { useEvents, tagStyleOf } from "@/lib/events-store";
 import { useTasks } from "@/lib/tasks-store";
 import { DaySheet, SwipeHint } from "./DaySheet";
 import { EventEditor } from "./EventEditor";
@@ -78,7 +78,7 @@ export function CalendarApp() {
     // tasks read as hollow rings so they never look like events
     for (const t of tasks) {
       if (!t.due || t.done) continue;
-      push(t.due, { color: t.tag ? TAG_STYLES[t.tag].dot : "var(--clay-muted)", hollow: true });
+      push(t.due, { color: tagStyleOf(t.tag).dot, hollow: true });
     }
     return set;
   }, [events, tasks]);
