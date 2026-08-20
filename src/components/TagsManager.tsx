@@ -67,36 +67,61 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
             </div>
 
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6">
-              {tags.map((t) => (
-                <motion.div
-                  key={t.id}
-                  layout
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.97 }}
-                  className="rounded-2xl p-3"
-                  style={{ border: "1px solid var(--hairline)", background: styleForColor(t.color, t.label).bg }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: `var(--tag-${t.color})` }} />
-                    <input
-                      value={t.label}
-                      onChange={(e) => update(t.id, { label: e.target.value })}
-                      aria-label="Tag name"
-                      className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
-                      style={{ color: "var(--clay)" }}
-                    />
-                    <button
-                      onClick={() => { haptic(14); remove(t.id); }}
-                      aria-label={`Delete ${t.label}`}
-                      className="grid h-8 w-8 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <Swatches value={t.color} onChange={(c) => { haptic(8); update(t.id, { color: c }); }} />
-                </motion.div>
-              ))}
+              {tags.map((t) => {
+                const colorOpen = openColorId === t.id;
+                return (
+                  <motion.div
+                    key={t.id}
+                    layout
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    className="rounded-2xl p-3"
+                    style={{ border: "1px solid var(--hairline)", background: styleForColor(t.color, t.label).bg }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => { haptic(8); setOpenColorId(colorOpen ? null : t.id); }}
+                        aria-label={`Toggle color picker for ${t.label}`}
+                        aria-expanded={colorOpen}
+                        className="grid h-6 w-6 place-items-center rounded-full transition-colors hover:bg-surface"
+                      >
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: `var(--tag-${t.color})` }} />
+                      </motion.button>
+                      <input
+                        value={t.label}
+                        onChange={(e) => update(t.id, { label: e.target.value })}
+                        aria-label="Tag name"
+                        className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
+                        style={{ color: "var(--clay)" }}
+                      />
+                      <button
+                        onClick={() => { haptic(14); remove(t.id); }}
+                        aria-label={`Delete ${t.label}`}
+                        className="grid h-8 w-8 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <AnimatePresence initial={false}>
+                      {colorOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.22, ease: "easeOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-3">
+                            <Swatches value={t.color} onChange={(c) => { haptic(8); update(t.id, { color: c }); }} />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
 
               <div className="rounded-2xl p-3" style={{ border: "1px dashed var(--hairline)" }}>
                 <div className="flex items-center gap-2">
