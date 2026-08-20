@@ -8,7 +8,7 @@ import { RemindersField } from "./RemindersField";
 import { EVENT_REMINDERS } from "@/lib/notifications";
 
 
-const TAGS: TagColor[] = ["blue", "green", "orange", "yellow", "teal", "pink", "purple", "red"];
+
 
 export function EventEditor({
   open,
@@ -152,7 +152,7 @@ export function EventEditor({
                   <h2 className="font-serif text-3xl leading-tight tracking-tight text-clay">{existing.title}</h2>
                   {existing.tag && (
                     <div className="mt-4">
-                      <TagBadge {...TAG_STYLES[existing.tag]} />
+                      <TagBadge {...styleOf(existing.tag)} />
                     </div>
                   )}
                   <div className="mt-5">
@@ -275,8 +275,9 @@ export function EventEditor({
                 <div className="text-[10px] uppercase tracking-[0.24em] text-clay-soft">Tag</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <TagChip active={!tag} onClick={() => setTag(undefined)} label="None" />
-                  {TAGS.map((t) => {
-                    const s = TAG_STYLES[t];
+                  {tags.map((tg) => {
+                    const s = styleOf(tg.id);
+                    const t = tg.id;
                     const active = tag === t;
                     return (
                       <motion.button
