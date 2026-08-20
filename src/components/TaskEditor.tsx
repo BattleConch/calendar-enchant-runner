@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useTasks, type Priority } from "@/lib/tasks-store";
-import { TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { type TagColor } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
 import { haptic } from "@/lib/haptics";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 import { RemindersField } from "./RemindersField";
@@ -28,6 +29,7 @@ export function TaskEditor({
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
   const [tag, setTag] = useState<TagColor | undefined>(undefined);
+  const { tags, styleOf } = useTags();
   const [priority, setPriority] = useState<Priority>("med");
   const [notes, setNotes] = useState("");
   const [reminders, setReminders] = useState<string[]>([]);

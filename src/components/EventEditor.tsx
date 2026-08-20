@@ -2,7 +2,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { useEvents, type TagColor } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 import { RemindersField } from "./RemindersField";
 import { EVENT_REMINDERS } from "@/lib/notifications";
@@ -33,6 +34,7 @@ export function EventEditor({
   const [start, setStart] = useState(defaultStart);
   const [end, setEnd] = useState(defaultEnd);
   const [tag, setTag] = useState<TagColor | undefined>(undefined);
+  const { tags, styleOf } = useTags();
   const [notes, setNotes] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [reminders, setReminders] = useState<string[]>([]);

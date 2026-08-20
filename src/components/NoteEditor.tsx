@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Pencil, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNotes } from "@/lib/notes-store";
-import { TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { type TagColor } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
 import { ConfirmDelete, DetailActions, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 import { filesToDataUrls } from "@/lib/images";
@@ -27,6 +28,7 @@ export function NoteEditor({
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [tag, setTag] = useState<TagColor | undefined>(undefined);
+  const { tags, styleOf } = useTags();
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const libraryInput = useRef<HTMLInputElement>(null);
