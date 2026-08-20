@@ -46,6 +46,7 @@ export function AgendaSheet({
 }) {
   const { byDate } = useEvents();
   const { tasks } = useTasks();
+  const { styleOf } = useTags();
   const [dir, setDir] = useState(0);
   const now = useNow();
   const nowMin = now ? now.getHours() * 60 + now.getMinutes() - DAY_START * 60 : null;
