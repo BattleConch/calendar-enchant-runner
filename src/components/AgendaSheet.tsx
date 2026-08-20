@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { addDays, format, isSameDay, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEvents, tagStyleOf } from "@/lib/events-store";
+import { useEvents } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
 import { useTasks } from "@/lib/tasks-store";
 import { useEffect, useRef, useState } from "react";
 import { haptic } from "@/lib/haptics";
@@ -199,7 +200,7 @@ export function AgendaSheet({
               <div className="px-1 pb-2 text-[10px] uppercase tracking-[0.2em] text-clay-muted">All-day</div>
               <div className="flex flex-wrap gap-1.5">
                 {allDayEvents.map((e) => {
-                  const s = tagStyleOf(e.tag);
+                  const s = styleOf(e.tag);
                   return (
                     <motion.button
                       key={e.id}
@@ -214,7 +215,7 @@ export function AgendaSheet({
                   );
                 })}
                 {floatingTasks.map((t) => {
-                  const s = t.tag ? tagStyleOf(t.tag) : null;
+                  const s = t.tag ? styleOf(t.tag) : null;
                   return (
                     <motion.button
                       key={t.id}
@@ -334,7 +335,7 @@ export function AgendaSheet({
                   const dur = (eh * 60 + em) - (sh * 60 + sm);
                   const top = (startMin / 60) * HOUR_H;
                   const height = Math.max(20, (dur / 60) * HOUR_H - 4);
-                  const s = tagStyleOf(e.tag);
+                  const s = styleOf(e.tag);
                   const roomy = height >= 46;
                   const tiny = height < 28;
                   return (

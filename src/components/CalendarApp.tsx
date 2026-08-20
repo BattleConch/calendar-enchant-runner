@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { addMonths, addDays, format, isSameDay, isSameMonth, startOfMonth, startOfWeek, endOfMonth, endOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useEvents, tagStyleOf } from "@/lib/events-store";
+import { useEvents } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
 import { useTasks } from "@/lib/tasks-store";
 import { DaySheet, SwipeHint } from "./DaySheet";
 import { EventEditor } from "./EventEditor";
@@ -24,6 +25,7 @@ const iso = (d: Date) => format(d, "yyyy-MM-dd");
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export function CalendarApp() {
+  const { styleOf } = useTags();
   const [tab, setTab] = useState<Tab>("home");
   const [cursor, setCursor] = useState<Date>(new Date());
   const [selected, setSelected] = useState<Date>(new Date());
@@ -74,11 +76,11 @@ export function CalendarApp() {
       arr.push(dot);
       set.set(date, arr);
     };
-    for (const e of events) push(e.date, { color: tagStyleOf(e.tag).dot, hollow: false });
+    for (const e of events) push(e.date, { color: styleOf(e.tag).dot, hollow: false });
     // tasks read as hollow rings so they never look like events
     for (const t of tasks) {
       if (!t.due || t.done) continue;
-      push(t.due, { color: tagStyleOf(t.tag).dot, hollow: true });
+      push(t.due, { color: styleOf(t.tag).dot, hollow: true });
     }
     return set;
   }, [events, tasks]);
@@ -277,7 +279,7 @@ export function CalendarApp() {
                   )}
                   <AnimatePresence initial={false}>
                     {selectedEvents.slice(0, 3).map((e, i) => {
-                      const s = tagStyleOf(e.tag);
+                      const s = styleOf(e.tag);
                       return (
                         <motion.button
                           key={e.id}
