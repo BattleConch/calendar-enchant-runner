@@ -24,6 +24,7 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
   const { tags, add, update, remove } = useTags();
   const [draft, setDraft] = useState("");
   const [draftColor, setDraftColor] = useState<PaletteKey>("blue");
+  const [openColorId, setOpenColorId] = useState<string | null>(null);
 
   const create = () => {
     if (!draft.trim()) return;
