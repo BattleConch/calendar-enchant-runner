@@ -4,6 +4,8 @@ import { Bell, Info, Moon, Sparkles, Vibrate, CalendarDays, Sun, Monitor, Cloud,
 import { haptic } from "@/lib/haptics";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { TagsManager } from "./TagsManager";
+import { Tags } from "lucide-react";
 
 
 type Prefs = {
@@ -28,6 +30,7 @@ export function SettingsPage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [tagsOpen, setTagsOpen] = useState(false);
 
 
   useEffect(() => {
@@ -107,6 +110,20 @@ export function SettingsPage() {
           {authError && <div className="mt-2 text-xs text-clay-soft">{authError}</div>}
         </div>
       </Group>
+
+      <Group title="Tags">
+        <button
+          onClick={() => { haptic(8); setTagsOpen(true); }}
+          className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-surface-hover"
+        >
+          <span className="text-clay-soft"><Tags className="h-4 w-4" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px]">My Tags</div>
+            <div className="mt-0.5 text-xs text-clay-soft">Add, rename, recolor or remove tags</div>
+          </div>
+        </button>
+      </Group>
+      <TagsManager open={tagsOpen} onClose={() => setTagsOpen(false)} />
 
       <Group title="Appearance">
 

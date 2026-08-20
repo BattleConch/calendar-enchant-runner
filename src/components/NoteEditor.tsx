@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Pencil, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNotes } from "@/lib/notes-store";
-import { TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { type TagColor } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
 import { ConfirmDelete, DetailActions, TagBadge, UnsavedChanges } from "./DetailChrome";
 
 import { filesToDataUrls } from "@/lib/images";
 import { haptic } from "@/lib/haptics";
 
-const TAGS: TagColor[] = ["blue", "green", "orange", "yellow", "teal", "pink", "purple", "red"];
+
 
 
 export function NoteEditor({
@@ -27,6 +28,7 @@ export function NoteEditor({
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [tag, setTag] = useState<TagColor | undefined>(undefined);
+  const { tags, styleOf } = useTags();
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const libraryInput = useRef<HTMLInputElement>(null);
@@ -134,7 +136,7 @@ export function NoteEditor({
               >
                 {existing.tag && (
                   <div className="pt-2">
-                    <TagBadge {...TAG_STYLES[existing.tag]} />
+                    <TagBadge {...styleOf(existing.tag)} />
                   </div>
                 )}
                 <h2 className="mt-3 font-serif text-3xl leading-tight tracking-tight text-clay">
@@ -182,8 +184,9 @@ export function NoteEditor({
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <TagChip active={!tag} onClick={() => setTag(undefined)} label="None" />
-                {TAGS.map((t) => {
-                  const s = TAG_STYLES[t];
+                {tags.map((tg) => {
+                  const s = styleOf(tg.id);
+                  const t = tg.id;
                   const active = tag === t;
                   return (
                     <motion.button

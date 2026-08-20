@@ -2,7 +2,8 @@ import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion
 import { useMemo, useState } from "react";
 import { ChevronDown, Check, GripVertical } from "lucide-react";
 import { useTasks, type Task } from "@/lib/tasks-store";
-import { TAG_STYLES } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
+import { TagFilter, useTagFilter } from "./TagFilter";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import { haptic } from "@/lib/haptics";
 
@@ -17,14 +18,17 @@ function dueLabel(d?: string) {
 export function TasksPage({ onEdit }: { onEdit: (id: string | null) => void }) {
   const { tasks, toggle, reorder } = useTasks();
   const [showDone, setShowDone] = useState(false);
+  const { selected, setSelected, matches } = useTagFilter("calendry.tasks.tagfilter.v1");
+  const { styleOf } = useTags();
 
-  const { pending, done } = useMemo(() => ({
-    pending: tasks.filter((t) => !t.done),
-    done: tasks.filter((t) => t.done),
-  }), [tasks]);
+  const { pending, done, hidden } = useMemo(() => ({
+    pending: tasks.filter((t) => !t.done && matches(t.tag)),
+    done: tasks.filter((t) => t.done && matches(t.tag)),
+    hidden: tasks.filter((t) => !matches(t.tag)),
+  }), [tasks, selected]);
 
   const onReorder = (next: Task[]) => {
-    reorder([...next.map((t) => t.id), ...done.map((t) => t.id)]);
+    reorder([...next.map((t) => t.id), ...done.map((t) => t.id), ...hidden.map((t) => t.id)]);
   };
 
   return (
@@ -35,11 +39,14 @@ export function TasksPage({ onEdit }: { onEdit: (id: string | null) => void }) {
       transition={{ duration: 0.25 }}
       className="px-5"
     >
-      <div className="pt-1 pb-4">
-        <div className="text-xs uppercase tracking-[0.24em] text-clay-soft">To do</div>
-        <p className="mt-1 text-sm text-clay-soft">
-          {pending.length} open · {done.length} done · hold to drag
-        </p>
+      <div className="flex items-start justify-between gap-2 pt-1 pb-4">
+        <div>
+          <div className="text-xs uppercase tracking-[0.24em] text-clay-soft">To do</div>
+          <p className="mt-1 text-sm text-clay-soft">
+            {pending.length} open · {done.length} done · hold to drag
+          </p>
+        </div>
+        <TagFilter selected={selected} onChange={setSelected} />
       </div>
 
       <Reorder.Group axis="y" values={pending} onReorder={onReorder} className="space-y-2">
@@ -83,7 +90,7 @@ export function TasksPage({ onEdit }: { onEdit: (id: string | null) => void }) {
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3"
-                      style={{ border: "1px solid var(--hairline)", borderLeft: `4px solid ${t.tag ? TAG_STYLES[t.tag].dot : "var(--hairline)"}` }}
+                      style={{ border: "1px solid var(--hairline)", borderLeft: `4px solid ${t.tag ? styleOf(t.tag).dot : "var(--hairline)"}` }}
                     >
                       <TaskCheck done={t.done} onToggle={() => toggle(t.id)} />
                       <button onClick={() => onEdit(t.id)} className="min-w-0 flex-1 text-left">
@@ -125,7 +132,8 @@ function TaskCheck({ done, onToggle }: { done: boolean; onToggle: () => void }) 
 }
 
 function TaskRow({ t, onToggle, onEdit }: { t: Task; onToggle: () => void; onEdit: () => void }) {
-  const s = t.tag ? TAG_STYLES[t.tag] : null;
+  const { styleOf } = useTags();
+  const s = t.tag ? styleOf(t.tag) : null;
   const label = dueLabel(t.due);
   const controls = useDragControls();
   return (

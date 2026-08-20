@@ -3,14 +3,16 @@ import { useEffect, useState } from "react";
 
 import { format, isSameDay, addDays, startOfWeek, parseISO } from "date-fns";
 import { ArrowRight, Plus, GripVertical, Check } from "lucide-react";
-import { useEvents, TAG_STYLES, type TagColor } from "@/lib/events-store";
+import { useEvents, type TagColor } from "@/lib/events-store";
+import { useTags } from "@/lib/tags-store";
+import { MyTagsButton } from "./TagsManager";
 import { useTasks } from "@/lib/tasks-store";
 import { useNotes } from "@/lib/notes-store";
 import { haptic } from "@/lib/haptics";
 import type { Tab } from "./BottomNav";
 
 const iso = (d: Date) => format(d, "yyyy-MM-dd");
-const dotOf = (tag?: TagColor) => (tag ? TAG_STYLES[tag].dot : "var(--clay-muted)");
+
 
 type WidgetId = "week" | "today" | "tasks" | "upcoming" | "notes";
 const DEFAULT_ORDER: WidgetId[] = ["week", "today", "tasks", "upcoming", "notes"];
@@ -49,6 +51,8 @@ export function HomePage({
   const { events, byDate } = useEvents();
   const { tasks } = useTasks();
   const { notes } = useNotes();
+  const { styleOf } = useTags();
+  const dotOf = (tag?: TagColor) => (tag ? styleOf(tag).dot : "var(--clay-muted)");
 
   const now = new Date();
   const hour = now.getHours();
@@ -243,6 +247,8 @@ export function HomePage({
             {pendingAll.length > 0 && ` ${pendingAll.length} open ${pendingAll.length === 1 ? "task" : "tasks"}.`}
           </div>
         </div>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <MyTagsButton />
         <button
           onClick={() => { haptic(8); setArranging((a) => !a); }}
           className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-[11px] text-clay-soft"
@@ -250,6 +256,7 @@ export function HomePage({
         >
           {arranging ? <><Check className="h-3 w-3" /> Done</> : <><GripVertical className="h-3 w-3" /> Arrange</>}
         </button>
+        </div>
       </div>
 
       <Reorder.Group axis="y" values={order} onReorder={setOrder} className="space-y-4">

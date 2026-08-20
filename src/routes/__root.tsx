@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { EventsProvider } from "../lib/events-store";
 import { TasksProvider } from "../lib/tasks-store";
 import { NotesProvider } from "../lib/notes-store";
+import { TagsProvider } from "../lib/tags-store";
 import { ThemeProvider } from "../lib/theme";
 import { AuthProvider } from "../lib/auth";
 
@@ -132,7 +133,9 @@ function RootComponent() {
           <EventsProvider>
             <TasksProvider>
               <NotesProvider>
-                <Outlet />
+                <TagsProvider>
+                  <Outlet />
+                </TagsProvider>
               </NotesProvider>
             </TasksProvider>
           </EventsProvider>
