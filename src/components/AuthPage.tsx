@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptics";
+import { markOnboardingPending } from "./Onboarding";
 
 type Mode = "signin" | "signup";
 
