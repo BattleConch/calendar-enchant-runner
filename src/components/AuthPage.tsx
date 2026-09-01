@@ -33,6 +33,7 @@ export function AuthPage() {
       : await signInWithEmail(email.trim(), password);
     setBusy(false);
     if (res.error) { setError(res.error); return; }
+    if (mode === "signup") markOnboardingPending();
     if (mode === "signup" && "needsConfirmation" in res && res.needsConfirmation) {
       setNotice("Check your email to confirm your account, then sign in.");
       return;
