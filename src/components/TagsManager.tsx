@@ -210,22 +210,24 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
 
 function Swatches({ value, onChange }: { value: PaletteKey; onChange: (c: PaletteKey) => void }) {
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
+    <div className="mt-2 flex flex-wrap gap-3 px-1 py-1.5">
       {PALETTE.map((c) => (
         <motion.button
           key={c}
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.88 }}
+          animate={{ scale: value === c ? 1.06 : 1 }}
+          transition={{ type: "spring", stiffness: 520, damping: 24 }}
           onClick={() => onChange(c)}
           aria-label={`Color ${c}`}
           aria-pressed={value === c}
-          className="h-6 w-6 rounded-full"
+          className="h-6 w-6 shrink-0 rounded-full"
           style={{
             background: `var(--tag-${c})`,
-            outline: value === c ? "2px solid var(--clay)" : "none",
-            outlineOffset: "2px",
+            boxShadow: value === c ? "0 0 0 2px var(--surface, transparent), 0 0 0 4px var(--clay)" : "none",
           }}
         />
       ))}
     </div>
+
   );
 }
