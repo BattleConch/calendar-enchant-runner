@@ -363,6 +363,8 @@ export function CalendarApp() {
         editingId={editingTaskId}
       />
       <UndoToast />
+      <Onboarding onFinish={() => setTab("tasks")} />
+
       <NoteEditor
         open={noteEditorOpen}
         onClose={() => setNoteEditorOpen(false)}
