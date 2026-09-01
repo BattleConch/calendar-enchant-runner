@@ -81,39 +81,47 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                       className="rounded-2xl p-3"
                       style={{ border: "1px solid var(--hairline)", background: styleForColor(t.color, t.label).bg }}
                     >
-                      <div className="flex items-center gap-2">
-                        <motion.button
-                          whileTap={{ scale: 0.82 }}
-                          transition={{ type: "spring", stiffness: 620, damping: 20 }}
-                          onPointerDown={() => haptic(6)}
-                          onClick={() => { haptic([6, 18, 10]); setOpenColorId(colorOpen ? null : t.id); }}
-                          aria-label={`Toggle color picker for ${t.label}`}
-                          aria-expanded={colorOpen}
-                          className="grid h-6 w-6 place-items-center rounded-full transition-colors hover:bg-surface"
-                        >
+                      <motion.div
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={colorOpen}
+                        aria-label={`Toggle color picker for ${t.label}`}
+                        whileTap={{ scale: 0.985 }}
+                        transition={{ type: "spring", stiffness: 620, damping: 24 }}
+                        onPointerDown={() => haptic(6)}
+                        onClick={() => { haptic([6, 18, 10]); setOpenColorId(colorOpen ? null : t.id); }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenColorId(colorOpen ? null : t.id); }
+                        }}
+                        className="flex cursor-pointer items-center gap-2 focus:outline-none"
+                      >
+                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full">
                           <motion.span
-                            layout
-                            animate={{ scale: colorOpen ? 1.25 : 1 }}
+                            animate={{ scale: colorOpen ? 1.3 : 1 }}
                             transition={{ type: "spring", stiffness: 500, damping: 26 }}
                             className="h-2.5 w-2.5 rounded-full"
                             style={{ background: `var(--tag-${t.color})` }}
                           />
-                        </motion.button>
+                        </span>
                         <input
                           value={t.label}
                           onChange={(e) => update(t.id, { label: e.target.value })}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
                           aria-label="Tag name"
                           className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
                           style={{ color: "var(--clay)" }}
                         />
                         <button
-                          onClick={() => { haptic(14); remove(t.id); }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => { e.stopPropagation(); haptic(14); remove(t.id); }}
                           aria-label={`Delete ${t.label}`}
-                          className="grid h-8 w-8 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface"
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      </div>
+                      </motion.div>
+
                       <AnimatePresence initial={false}>
                         {colorOpen && (
                           <motion.div
@@ -202,22 +210,24 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
 
 function Swatches({ value, onChange }: { value: PaletteKey; onChange: (c: PaletteKey) => void }) {
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
+    <div className="mt-2 flex flex-wrap gap-3 px-1 py-1.5">
       {PALETTE.map((c) => (
         <motion.button
           key={c}
-          whileTap={{ scale: 0.9 }}
+          whileTap={{ scale: 0.88 }}
+          animate={{ scale: value === c ? 1.06 : 1 }}
+          transition={{ type: "spring", stiffness: 520, damping: 24 }}
           onClick={() => onChange(c)}
           aria-label={`Color ${c}`}
           aria-pressed={value === c}
-          className="h-6 w-6 rounded-full"
+          className="h-6 w-6 shrink-0 rounded-full"
           style={{
             background: `var(--tag-${c})`,
-            outline: value === c ? "2px solid var(--clay)" : "none",
-            outlineOffset: "2px",
+            boxShadow: value === c ? "0 0 0 2px var(--surface, transparent), 0 0 0 4px var(--clay)" : "none",
           }}
         />
       ))}
     </div>
+
   );
 }

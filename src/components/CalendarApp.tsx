@@ -17,6 +17,7 @@ import { SettingsPage } from "./SettingsPage";
 import { BottomNav, type Tab } from "./BottomNav";
 import { SyncStatus } from "./SyncStatus";
 import { UndoToast } from "./UndoToast";
+import { Onboarding } from "./Onboarding";
 import { useReminderScheduler } from "@/lib/notifications";
 
 import { haptic } from "@/lib/haptics";
@@ -363,6 +364,8 @@ export function CalendarApp() {
         editingId={editingTaskId}
       />
       <UndoToast />
+      <Onboarding onFinish={() => setTab("tasks")} />
+
       <NoteEditor
         open={noteEditorOpen}
         onClose={() => setNoteEditorOpen(false)}

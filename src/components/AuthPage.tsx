@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptics";
+import { markOnboardingPending } from "./Onboarding";
 
 type Mode = "signin" | "signup";
 
@@ -33,6 +34,7 @@ export function AuthPage() {
       : await signInWithEmail(email.trim(), password);
     setBusy(false);
     if (res.error) { setError(res.error); return; }
+    if (mode === "signup") markOnboardingPending();
     if (mode === "signup" && "needsConfirmation" in res && res.needsConfirmation) {
       setNotice("Check your email to confirm your account, then sign in.");
       return;
@@ -69,6 +71,7 @@ export function AuthPage() {
         <button
           onClick={async () => {
             haptic(8); setError(null); setBusy(true);
+            if (mode === "signup") markOnboardingPending();
             const res = await signInWithGoogle();
             if (res.error) setError(res.error);
             setBusy(false);
