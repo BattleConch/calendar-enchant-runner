@@ -67,65 +67,95 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
             </div>
 
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6">
-              {tags.map((t) => {
-                const colorOpen = openColorId === t.id;
-                return (
-                  <motion.div
-                    key={t.id}
-                    layout
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    className="rounded-2xl p-3"
-                    style={{ border: "1px solid var(--hairline)", background: styleForColor(t.color, t.label).bg }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => { haptic(8); setOpenColorId(colorOpen ? null : t.id); }}
-                        aria-label={`Toggle color picker for ${t.label}`}
-                        aria-expanded={colorOpen}
-                        className="grid h-6 w-6 place-items-center rounded-full transition-colors hover:bg-surface"
-                      >
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: `var(--tag-${t.color})` }} />
-                      </motion.button>
-                      <input
-                        value={t.label}
-                        onChange={(e) => update(t.id, { label: e.target.value })}
-                        aria-label="Tag name"
-                        className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
-                        style={{ color: "var(--clay)" }}
-                      />
-                      <button
-                        onClick={() => { haptic(14); remove(t.id); }}
-                        aria-label={`Delete ${t.label}`}
-                        className="grid h-8 w-8 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <AnimatePresence initial={false}>
-                      {colorOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.22, ease: "easeOut" }}
-                          className="overflow-hidden"
+              <AnimatePresence initial={false}>
+                {tags.map((t) => {
+                  const colorOpen = openColorId === t.id;
+                  return (
+                    <motion.div
+                      key={t.id}
+                      layout
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                      className="rounded-2xl p-3"
+                      style={{ border: "1px solid var(--hairline)", background: styleForColor(t.color, t.label).bg }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          whileTap={{ scale: 0.82 }}
+                          transition={{ type: "spring", stiffness: 620, damping: 20 }}
+                          onPointerDown={() => haptic(6)}
+                          onClick={() => { haptic([6, 18, 10]); setOpenColorId(colorOpen ? null : t.id); }}
+                          aria-label={`Toggle color picker for ${t.label}`}
+                          aria-expanded={colorOpen}
+                          className="grid h-6 w-6 place-items-center rounded-full transition-colors hover:bg-surface"
                         >
-                          <div className="pt-3">
-                            <Swatches value={t.color} onChange={(c) => { haptic(8); update(t.id, { color: c }); }} />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })}
+                          <motion.span
+                            layout
+                            animate={{ scale: colorOpen ? 1.25 : 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 26 }}
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ background: `var(--tag-${t.color})` }}
+                          />
+                        </motion.button>
+                        <input
+                          value={t.label}
+                          onChange={(e) => update(t.id, { label: e.target.value })}
+                          aria-label="Tag name"
+                          className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
+                          style={{ color: "var(--clay)" }}
+                        />
+                        <button
+                          onClick={() => { haptic(14); remove(t.id); }}
+                          aria-label={`Delete ${t.label}`}
+                          className="grid h-8 w-8 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <AnimatePresence initial={false}>
+                        {colorOpen && (
+                          <motion.div
+                            key="swatches"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pt-3">
+                              <Swatches value={t.color} onChange={(c) => { haptic(8); update(t.id, { color: c }); }} />
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
 
-              <div className="rounded-2xl p-3" style={{ border: "1px dashed var(--hairline)" }}>
+              <motion.div layout className="rounded-2xl p-3" style={{ border: "1px dashed var(--hairline)" }}>
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: `var(--tag-${draftColor})` }} />
+                  <motion.button
+                    whileTap={{ scale: 0.82 }}
+                    transition={{ type: "spring", stiffness: 620, damping: 20 }}
+                    onPointerDown={() => haptic(6)}
+                    onClick={() => { haptic([6, 18, 10]); setOpenColorId(openColorId === "new" ? null : "new"); }}
+                    aria-label="Toggle color picker for new tag"
+                    aria-expanded={openColorId === "new"}
+                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface"
+                  >
+                    <motion.span
+                      animate={{ scale: openColorId === "new" ? 1.25 : 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 26 }}
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{
+                        background: openColorId === "new" ? `var(--tag-${draftColor})` : "transparent",
+                        border: "1px dashed var(--clay-soft, var(--hairline))",
+                      }}
+                    />
+                  </motion.button>
                   <input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
@@ -134,18 +164,35 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                     className="min-w-0 flex-1 bg-transparent text-[15px] placeholder:text-clay-muted focus:outline-none"
                     style={{ color: "var(--clay)" }}
                   />
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.92 }}
                     onClick={create}
                     disabled={!draft.trim()}
                     className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs disabled:opacity-40"
                     style={{ background: "var(--clay)", color: "var(--ivory)" }}
                   >
                     <Plus className="h-3.5 w-3.5" /> Add
-                  </button>
+                  </motion.button>
                 </div>
-                <Swatches value={draftColor} onChange={setDraftColor} />
-              </div>
+                <AnimatePresence initial={false}>
+                  {openColorId === "new" && (
+                    <motion.div
+                      key="new-swatches"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-3">
+                        <Swatches value={draftColor} onChange={(c) => { haptic(8); setDraftColor(c); }} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             </div>
+
           </motion.div>
         </>
       )}
