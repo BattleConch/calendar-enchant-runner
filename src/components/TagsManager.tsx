@@ -103,13 +103,20 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                             style={{ background: `var(--tag-${t.color})` }}
                           />
                         </span>
-                        <input
+                        <motion.input
+                          layout
                           value={t.label}
+                          readOnly={!colorOpen}
                           onChange={(e) => update(t.id, { label: e.target.value })}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => { if (colorOpen) e.stopPropagation(); }}
+                          onClick={(e) => { if (colorOpen) e.stopPropagation(); }}
                           aria-label="Tag name"
-                          className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
+                          animate={{
+                            borderColor: colorOpen ? "var(--hairline)" : "rgba(0,0,0,0)",
+                            backgroundColor: colorOpen ? "var(--surface)" : "rgba(0,0,0,0)",
+                          }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className={`min-w-0 flex-1 rounded-lg border px-2 py-1 text-[15px] focus:outline-none ${colorOpen ? "cursor-text" : "cursor-pointer"}`}
                           style={{ color: "var(--clay)" }}
                         />
                         <button
@@ -144,16 +151,21 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
               </AnimatePresence>
 
               <motion.div layout className="rounded-2xl p-3" style={{ border: "1px dashed var(--hairline)" }}>
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    whileTap={{ scale: 0.82 }}
-                    transition={{ type: "spring", stiffness: 620, damping: 20 }}
-                    onPointerDown={() => haptic(6)}
-                    onClick={() => { haptic([6, 18, 10]); setOpenColorId(openColorId === "new" ? null : "new"); }}
-                    aria-label="Toggle color picker for new tag"
-                    aria-expanded={openColorId === "new"}
-                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full transition-colors hover:bg-surface"
-                  >
+                <motion.div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={openColorId === "new"}
+                  aria-label="Toggle color picker for new tag"
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ type: "spring", stiffness: 620, damping: 24 }}
+                  onPointerDown={() => haptic(6)}
+                  onClick={() => { haptic([6, 18, 10]); setOpenColorId(openColorId === "new" ? null : "new"); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenColorId(openColorId === "new" ? null : "new"); }
+                  }}
+                  className="flex cursor-pointer items-center gap-2 focus:outline-none"
+                >
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full">
                     <motion.span
                       animate={{ scale: openColorId === "new" ? 1.25 : 1 }}
                       transition={{ type: "spring", stiffness: 500, damping: 26 }}
@@ -163,25 +175,35 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                         border: "1px dashed var(--clay-soft, var(--hairline))",
                       }}
                     />
-                  </motion.button>
-                  <input
+                  </span>
+                  <motion.input
+                    layout
                     value={draft}
+                    readOnly={openColorId !== "new"}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") create(); }}
+                    onPointerDown={(e) => { if (openColorId === "new") e.stopPropagation(); }}
+                    onClick={(e) => { if (openColorId === "new") e.stopPropagation(); }}
                     placeholder="New tag name"
-                    className="min-w-0 flex-1 bg-transparent text-[15px] placeholder:text-clay-muted focus:outline-none"
+                    animate={{
+                      borderColor: openColorId === "new" ? "var(--hairline)" : "rgba(0,0,0,0)",
+                      backgroundColor: openColorId === "new" ? "var(--surface)" : "rgba(0,0,0,0)",
+                    }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    className={`min-w-0 flex-1 rounded-lg border px-2 py-1 text-[15px] placeholder:text-clay-muted focus:outline-none ${openColorId === "new" ? "cursor-text" : "cursor-pointer"}`}
                     style={{ color: "var(--clay)" }}
                   />
                   <motion.button
                     whileTap={{ scale: 0.92 }}
-                    onClick={create}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); create(); }}
                     disabled={!draft.trim()}
-                    className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs disabled:opacity-40"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs disabled:opacity-40"
                     style={{ background: "var(--clay)", color: "var(--ivory)" }}
                   >
                     <Plus className="h-3.5 w-3.5" /> Add
                   </motion.button>
-                </div>
+                </motion.div>
                 <AnimatePresence initial={false}>
                   {openColorId === "new" && (
                     <motion.div
