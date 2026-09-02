@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SyncTable = "events" | "tasks" | "notes";
+export type SyncTable = "events" | "tasks" | "notes" | "tags";
 type Op = "insert" | "update" | "delete";
 
 export type Pending = {

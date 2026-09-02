@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
  * triggers `onChange` so the local list can be refreshed.
  */
 export function subscribeTable(
-  table: "events" | "tasks" | "notes",
+  table: "events" | "tasks" | "notes" | "tags",
   userId: string,
   onChange: () => void,
 ) {
