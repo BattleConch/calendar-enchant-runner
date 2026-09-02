@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, X, Tags } from "lucide-react";
 import { haptic } from "@/lib/haptics";
 import { PALETTE, styleForColor, useTags, type PaletteKey } from "@/lib/tags-store";
@@ -25,6 +25,22 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
   const [draft, setDraft] = useState("");
   const [draftColor, setDraftColor] = useState<PaletteKey>("blue");
   const [openColorId, setOpenColorId] = useState<string | null>(null);
+  const newTagRef = useRef<HTMLDivElement | null>(null);
+  const tagRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!openColorId) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      const activeEl =
+        openColorId === "new" ? newTagRef.current : tagRefs.current[openColorId];
+      if (activeEl && target && !activeEl.contains(target)) {
+        setOpenColorId(null);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [openColorId]);
 
   const create = () => {
     if (!draft.trim()) return;
@@ -73,6 +89,7 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                   return (
                     <motion.div
                       key={t.id}
+                      ref={(el) => { tagRefs.current[t.id] = el; }}
                       layout
                       initial={{ opacity: 0, y: 8, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -89,9 +106,13 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                         whileTap={{ scale: 0.985 }}
                         transition={{ type: "spring", stiffness: 620, damping: 24 }}
                         onPointerDown={() => haptic(6)}
-                        onClick={() => { haptic([6, 18, 10]); setOpenColorId(colorOpen ? null : t.id); }}
+                        onClick={() => {
+                          if (colorOpen) return;
+                          haptic([6, 18, 10]);
+                          setOpenColorId(t.id);
+                        }}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenColorId(colorOpen ? null : t.id); }
+                          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (colorOpen) return; setOpenColorId(t.id); }
                         }}
                         className="flex cursor-pointer items-center gap-2 focus:outline-none"
                       >
@@ -150,7 +171,7 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                 })}
               </AnimatePresence>
 
-              <motion.div layout className="rounded-2xl p-3" style={{ border: "1px dashed var(--hairline)" }}>
+              <motion.div ref={newTagRef} layout className="rounded-2xl p-3" style={{ border: "1px dashed var(--hairline)" }}>
                 <motion.div
                   role="button"
                   tabIndex={0}
@@ -159,10 +180,14 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                   whileTap={{ scale: 0.985 }}
                   transition={{ type: "spring", stiffness: 620, damping: 24 }}
                   onPointerDown={() => haptic(6)}
-                  onClick={() => { haptic([6, 18, 10]); setOpenColorId(openColorId === "new" ? null : "new"); }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenColorId(openColorId === "new" ? null : "new"); }
-                  }}
+                    onClick={() => {
+                      if (openColorId === "new") return;
+                      haptic([6, 18, 10]);
+                      setOpenColorId("new");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (openColorId === "new") return; setOpenColorId("new"); }
+                    }}
                   className="flex cursor-pointer items-center gap-2 focus:outline-none"
                 >
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full">
