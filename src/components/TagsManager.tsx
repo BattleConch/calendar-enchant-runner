@@ -103,13 +103,20 @@ export function TagsManager({ open, onClose }: { open: boolean; onClose: () => v
                             style={{ background: `var(--tag-${t.color})` }}
                           />
                         </span>
-                        <input
+                        <motion.input
+                          layout
                           value={t.label}
+                          readOnly={!colorOpen}
                           onChange={(e) => update(t.id, { label: e.target.value })}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => { if (colorOpen) e.stopPropagation(); }}
+                          onClick={(e) => { if (colorOpen) e.stopPropagation(); }}
                           aria-label="Tag name"
-                          className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
+                          animate={{
+                            borderColor: colorOpen ? "var(--hairline)" : "rgba(0,0,0,0)",
+                            backgroundColor: colorOpen ? "var(--surface)" : "rgba(0,0,0,0)",
+                          }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className={`min-w-0 flex-1 rounded-lg border px-2 py-1 text-[15px] focus:outline-none ${colorOpen ? "cursor-text" : "cursor-pointer"}`}
                           style={{ color: "var(--clay)" }}
                         />
                         <button
