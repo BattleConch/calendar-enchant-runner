@@ -14,15 +14,49 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_user_connections: {
+        Row: {
+          connection_key_ciphertext: string
+          connector_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connection_key_ciphertext: string
+          connector_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connection_key_ciphertext?: string
+          connector_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           all_day: boolean
           created_at: string
           date: string
           end_time: string
+          google_calendar_id: string | null
+          google_event_id: string | null
           id: string
+          is_owner: boolean
           notes: string | null
+          organizer_email: string | null
+          organizer_name: string | null
+          recurring_event_id: string | null
           reminders: string[]
+          source: string
           start_time: string
           tag: string
           title: string
@@ -34,9 +68,16 @@ export type Database = {
           created_at?: string
           date: string
           end_time?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
           id?: string
+          is_owner?: boolean
           notes?: string | null
+          organizer_email?: string | null
+          organizer_name?: string | null
+          recurring_event_id?: string | null
           reminders?: string[]
+          source?: string
           start_time?: string
           tag?: string
           title?: string
@@ -48,9 +89,16 @@ export type Database = {
           created_at?: string
           date?: string
           end_time?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
           id?: string
+          is_owner?: boolean
           notes?: string | null
+          organizer_email?: string | null
+          organizer_name?: string | null
+          recurring_event_id?: string | null
           reminders?: string[]
+          source?: string
           start_time?: string
           tag?: string
           title?: string
