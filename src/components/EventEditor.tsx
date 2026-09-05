@@ -197,6 +197,14 @@ export function EventEditor({
                       label="Time"
                       value={existing.allDay ? "All-day" : `${existing.start} – ${existing.end}`}
                     />
+                    {existing.source === "google" && !existing.isOwner && (existing.organizerName || existing.organizerEmail) ? (
+                      <PreviewRow
+                        label="Owner"
+                        value={existing.organizerName ?? existing.organizerEmail ?? ""}
+                      />
+                    ) : null}
+                    {existing.recurringEventId ? <PreviewRow label="Repeats" value="Part of a repeating series" /> : null}
+
                     {existing.reminders?.length ? (
                       <PreviewRow
                         label="Reminders"
