@@ -161,7 +161,7 @@ export function EventEditor({
                 {mode === "preview" && existing ? (
                   <DetailActions
                     onEdit={() => setMode("edit")}
-                    onDelete={() => setConfirming(true)}
+                    onDelete={askDelete}
                     onClose={onClose}
                   />
                 ) : (
@@ -350,7 +350,7 @@ export function EventEditor({
               <div className="mt-8 flex items-center gap-3 pb-2">
                 {existing && (
                   <button
-                    onClick={() => setConfirming(true)}
+                    onClick={askDelete}
                     className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover"
                     style={{ border: "1px solid var(--hairline)" }}
                     aria-label="Delete"
@@ -383,7 +383,14 @@ export function EventEditor({
             kind="event"
             name={existing?.title ?? ""}
             onCancel={() => setConfirming(false)}
-            onConfirm={() => { if (existing) remove(existing.id); setConfirming(false); onClose(); }}
+            onConfirm={() => { void doDelete("single"); }}
+          />
+          <RecurringDelete
+            open={recurOpen}
+            onCancel={() => setRecurOpen(false)}
+            onThisEvent={() => { haptic(12); void doDelete("single"); }}
+            onAllEvents={() => { haptic(16); void doDelete("series"); }}
+            error={deleteError}
           />
 
         </>
