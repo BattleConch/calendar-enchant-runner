@@ -17,7 +17,14 @@ export type CalEvent = {
   notes?: string;
   allDay?: boolean;
   reminders?: string[];
+  /** Where the event came from: the app itself, or a synced Google calendar. */
+  source?: "local" | "google";
+  organizerName?: string;
+  organizerEmail?: string;
+  isOwner?: boolean;
+  recurringEventId?: string;
 };
+
 
 type Ctx = {
   events: CalEvent[];
