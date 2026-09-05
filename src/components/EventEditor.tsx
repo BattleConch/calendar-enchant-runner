@@ -93,6 +93,32 @@ export function EventEditor({
     onClose();
   };
 
+  const isGoogle = existing?.source === "google";
+  const isRecurring = isGoogle && !!existing?.recurringEventId;
+
+  const askDelete = () => {
+    setDeleteError(null);
+    if (isRecurring) setRecurOpen(true);
+    else setConfirming(true);
+  };
+
+  const doDelete = async (scope: "single" | "series") => {
+    if (!existing) return;
+    if (isGoogle) {
+      try {
+        await removeGoogle({ data: { eventId: existing.id, scope } });
+      } catch (e) {
+        setDeleteError(e instanceof Error ? e.message : "Couldn't delete from Google Calendar.");
+        return;
+      }
+    }
+    remove(existing.id);
+    setRecurOpen(false);
+    setConfirming(false);
+    onClose();
+  };
+
+
   return (
     <AnimatePresence>
       {open && (
