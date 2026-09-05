@@ -2,11 +2,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useServerFn } from "@tanstack/react-start";
 import { useEvents, type TagColor } from "@/lib/events-store";
 import { useTags } from "@/lib/tags-store";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 import { RemindersField } from "./RemindersField";
 import { EVENT_REMINDERS } from "@/lib/notifications";
+import { deleteGoogleEvent } from "@/lib/google-calendar.functions";
+import { haptic } from "@/lib/haptics";
+
 
 
 
