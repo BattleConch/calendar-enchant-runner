@@ -44,6 +44,10 @@ export function EventEditor({
   const [reminders, setReminders] = useState<string[]>([]);
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
+  const [recurOpen, setRecurOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const removeGoogle = useServerFn(deleteGoogleEvent);
+
   const [warn, setWarn] = useState(false);
   const [baseline, setBaseline] = useState("");
 
