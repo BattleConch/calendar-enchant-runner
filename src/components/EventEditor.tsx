@@ -2,11 +2,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useServerFn } from "@tanstack/react-start";
 import { useEvents, type TagColor } from "@/lib/events-store";
 import { useTags } from "@/lib/tags-store";
 import { ConfirmDelete, DetailActions, PreviewRow, TagBadge, UnsavedChanges } from "./DetailChrome";
 import { RemindersField } from "./RemindersField";
 import { EVENT_REMINDERS } from "@/lib/notifications";
+import { deleteGoogleEvent } from "@/lib/google-calendar.functions";
+import { haptic } from "@/lib/haptics";
+
 
 
 
@@ -40,6 +44,10 @@ export function EventEditor({
   const [reminders, setReminders] = useState<string[]>([]);
   const [mode, setMode] = useState<"preview" | "edit">("edit");
   const [confirming, setConfirming] = useState(false);
+  const [recurOpen, setRecurOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const removeGoogle = useServerFn(deleteGoogleEvent);
+
   const [warn, setWarn] = useState(false);
   const [baseline, setBaseline] = useState("");
 
@@ -85,6 +93,32 @@ export function EventEditor({
     onClose();
   };
 
+  const isGoogle = existing?.source === "google";
+  const isRecurring = isGoogle && !!existing?.recurringEventId;
+
+  const askDelete = () => {
+    setDeleteError(null);
+    if (isRecurring) setRecurOpen(true);
+    else setConfirming(true);
+  };
+
+  const doDelete = async (scope: "single" | "series") => {
+    if (!existing) return;
+    if (isGoogle) {
+      try {
+        await removeGoogle({ data: { eventId: existing.id, scope } });
+      } catch (e) {
+        setDeleteError(e instanceof Error ? e.message : "Couldn't delete from Google Calendar.");
+        return;
+      }
+    }
+    remove(existing.id);
+    setRecurOpen(false);
+    setConfirming(false);
+    onClose();
+  };
+
+
   return (
     <AnimatePresence>
       {open && (
@@ -127,7 +161,7 @@ export function EventEditor({
                 {mode === "preview" && existing ? (
                   <DetailActions
                     onEdit={() => setMode("edit")}
-                    onDelete={() => setConfirming(true)}
+                    onDelete={askDelete}
                     onClose={onClose}
                   />
                 ) : (
@@ -163,6 +197,14 @@ export function EventEditor({
                       label="Time"
                       value={existing.allDay ? "All-day" : `${existing.start} – ${existing.end}`}
                     />
+                    {existing.source === "google" && !existing.isOwner && (existing.organizerName || existing.organizerEmail) ? (
+                      <PreviewRow
+                        label="Owner"
+                        value={existing.organizerName ?? existing.organizerEmail ?? ""}
+                      />
+                    ) : null}
+                    {existing.recurringEventId ? <PreviewRow label="Repeats" value="Part of a repeating series" /> : null}
+
                     {existing.reminders?.length ? (
                       <PreviewRow
                         label="Reminders"
@@ -316,7 +358,7 @@ export function EventEditor({
               <div className="mt-8 flex items-center gap-3 pb-2">
                 {existing && (
                   <button
-                    onClick={() => setConfirming(true)}
+                    onClick={askDelete}
                     className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-clay-soft transition-colors hover:bg-surface-hover"
                     style={{ border: "1px solid var(--hairline)" }}
                     aria-label="Delete"
@@ -349,7 +391,14 @@ export function EventEditor({
             kind="event"
             name={existing?.title ?? ""}
             onCancel={() => setConfirming(false)}
-            onConfirm={() => { if (existing) remove(existing.id); setConfirming(false); onClose(); }}
+            onConfirm={() => { void doDelete("single"); }}
+          />
+          <RecurringDelete
+            open={recurOpen}
+            onCancel={() => setRecurOpen(false)}
+            onThisEvent={() => { haptic(12); void doDelete("single"); }}
+            onAllEvents={() => { haptic(16); void doDelete("series"); }}
+            error={deleteError}
           />
 
         </>
@@ -392,5 +441,74 @@ function TagChip({ active, onClick, label }: { active: boolean; onClick: () => v
     >
       {label}
     </motion.button>
+  );
+}
+
+function RecurringDelete({
+  open,
+  onCancel,
+  onThisEvent,
+  onAllEvents,
+  error,
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onThisEvent: () => void;
+  onAllEvents: () => void;
+  error: string | null;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="rd-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onCancel}
+            className="fixed inset-0 z-[60] bg-clay/60 backdrop-blur-sm"
+          />
+          <motion.div
+            key="rd-card"
+            initial={{ opacity: 0, scale: 0.94, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 6 }}
+            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+            role="alertdialog"
+            aria-modal="true"
+            className="fixed left-1/2 top-1/2 z-[61] w-[min(21rem,88vw)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-ivory p-6 text-center"
+            style={{ border: "1px solid var(--hairline)", boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
+          >
+            <div className="font-serif text-xl text-clay">Delete repeating event</div>
+            <p className="mt-2 text-[13px] leading-relaxed text-clay-soft">
+              This event repeats. What would you like to remove?
+            </p>
+            {error && <p className="mt-3 text-[12px] text-clay-soft">{error}</p>}
+            <div className="mt-5 flex flex-col gap-2">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={onThisEvent}
+                className="w-full rounded-2xl py-3 text-[14px] text-clay"
+                style={{ background: "var(--surface-hover)" }}
+              >
+                This event only
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={onAllEvents}
+                className="w-full rounded-2xl py-3 text-[14px]"
+                style={{ background: "color-mix(in srgb, var(--tag-red) 16%, transparent)", color: "var(--tag-red)" }}
+              >
+                All repeating events
+              </motion.button>
+              <button onClick={onCancel} className="w-full rounded-2xl py-2.5 text-[14px] text-clay-soft">
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

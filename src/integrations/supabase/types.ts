@@ -178,11 +178,14 @@ export type Database = {
           created_at: string
           done: boolean
           due: string | null
+          google_list_id: string | null
+          google_task_id: string | null
           id: string
           notes: string | null
           position: number
           priority: string
           reminders: string[]
+          source: string
           tag: string | null
           title: string
           updated_at: string
@@ -192,11 +195,14 @@ export type Database = {
           created_at?: string
           done?: boolean
           due?: string | null
+          google_list_id?: string | null
+          google_task_id?: string | null
           id?: string
           notes?: string | null
           position?: number
           priority?: string
           reminders?: string[]
+          source?: string
           tag?: string | null
           title?: string
           updated_at?: string
@@ -206,11 +212,14 @@ export type Database = {
           created_at?: string
           done?: boolean
           due?: string | null
+          google_list_id?: string | null
+          google_task_id?: string | null
           id?: string
           notes?: string | null
           position?: number
           priority?: string
           reminders?: string[]
+          source?: string
           tag?: string | null
           title?: string
           updated_at?: string

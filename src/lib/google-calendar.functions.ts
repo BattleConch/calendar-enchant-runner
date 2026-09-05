@@ -10,7 +10,9 @@ const SCOPES = [
   "https://www.googleapis.com/auth/userinfo.profile",
   "https://www.googleapis.com/auth/calendar.events",
   "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/tasks",
 ];
+
 
 function clientApiKey() {
   const key = process.env['GOOGLE_CALENDAR_APP_USER_CONNECTOR_CLIENT_API_KEY'];
@@ -96,6 +98,8 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     }
     await deleteConnectionForUser(context.userId, CONNECTOR_ID);
     await context.supabase.from("events").delete().eq("source", "google");
+    await context.supabase.from("tasks").delete().eq("source", "google");
+
     return { ok: true };
   });
 
@@ -281,4 +285,97 @@ export const deleteGoogleEvent = createServerFn({ method: "POST" })
       await context.supabase.from("events").delete().eq("id", row.id);
     }
     return { ok: true };
+  });
+
+/* ----------------------------- Google Tasks ----------------------------- */
+
+type GTask = {
+  id: string;
+  title?: string;
+  notes?: string;
+  status?: string;
+  due?: string;
+  deleted?: boolean;
+};
+
+export const syncGoogleTasks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { getConnectionKeyForUser } = await import("@/server/appUserConnections.server");
+    const connectionAPIKey = await getConnectionKeyForUser(context.userId, CONNECTOR_ID);
+    if (!connectionAPIKey) return { connected: false, synced: 0 };
+    const { callAsAppUser } = await import("@/integrations/lovable/appUserConnector");
+
+    const listsRes = await callAsAppUser({
+      gatewayBaseUrl: GATEWAY_BASE_URL,
+      connectionAPIKey,
+      connectorId: CONNECTOR_ID,
+      path: "/tasks/v1/users/@me/lists",
+    });
+    if (!listsRes.ok) {
+      const body = await listsRes.text();
+      console.error(`Google Tasks list failed [${listsRes.status}]: ${body}`);
+      return { connected: true, synced: 0, error: `Google Tasks unavailable (${listsRes.status})` };
+    }
+    const lists = ((await listsRes.json()) as { items?: { id: string }[] }).items ?? [];
+
+    type Incoming = {
+      google_task_id: string;
+      google_list_id: string;
+      title: string;
+      done: boolean;
+      due: string | null;
+      notes: string | null;
+    };
+    const incoming: Incoming[] = [];
+
+    for (const list of lists) {
+      const q = new URLSearchParams({ maxResults: "100", showCompleted: "true", showHidden: "true" });
+      const res = await callAsAppUser({
+        gatewayBaseUrl: GATEWAY_BASE_URL,
+        connectionAPIKey,
+        connectorId: CONNECTOR_ID,
+        path: `/tasks/v1/lists/${encodeURIComponent(list.id)}/tasks?${q.toString()}`,
+      });
+      if (!res.ok) continue;
+      const items = ((await res.json()) as { items?: GTask[] }).items ?? [];
+      for (const t of items) {
+        if (t.deleted) continue;
+        incoming.push({
+          google_task_id: t.id,
+          google_list_id: list.id,
+          title: t.title?.trim() || "(no title)",
+          done: t.status === "completed",
+          due: t.due ? t.due.slice(0, 10) : null,
+          notes: t.notes ?? null,
+        });
+      }
+    }
+
+    const { data: existingRows } = await context.supabase
+      .from("tasks")
+      .select("id, google_task_id, google_list_id")
+      .eq("source", "google");
+
+    const byKey = new Map<string, string>();
+    for (const r of existingRows ?? []) {
+      if (r.google_task_id) byKey.set(`${r.google_list_id}::${r.google_task_id}`, r.id);
+    }
+
+    const seen = new Set<string>();
+    for (const t of incoming) {
+      const key = `${t.google_list_id}::${t.google_task_id}`;
+      seen.add(key);
+      const id = byKey.get(key);
+      if (id) await context.supabase.from("tasks").update(t).eq("id", id);
+      else
+        await context.supabase
+          .from("tasks")
+          .insert({ ...t, user_id: context.userId, source: "google" });
+    }
+
+    const stale = [...byKey.entries()].filter(([k]) => !seen.has(k)).map(([, id]) => id);
+    if (stale.length) await context.supabase.from("tasks").delete().in("id", stale);
+
+    return { connected: true, synced: incoming.length };
   });

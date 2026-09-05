@@ -17,7 +17,14 @@ export type CalEvent = {
   notes?: string;
   allDay?: boolean;
   reminders?: string[];
+  /** Where the event came from: the app itself, or a synced Google calendar. */
+  source?: "local" | "google";
+  organizerName?: string;
+  organizerEmail?: string;
+  isOwner?: boolean;
+  recurringEventId?: string;
 };
+
 
 type Ctx = {
   events: CalEvent[];
@@ -48,6 +55,7 @@ function seed(): CalEvent[] {
 
 type Row = {
   id: string; title: string; date: string; start_time: string; end_time: string; tag: string; notes: string | null; all_day?: boolean | null; reminders?: string[] | null;
+  source?: string | null; organizer_name?: string | null; organizer_email?: string | null; is_owner?: boolean | null; recurring_event_id?: string | null;
 };
 
 const fromRow = (r: Row): CalEvent => ({
@@ -60,7 +68,13 @@ const fromRow = (r: Row): CalEvent => ({
   notes: r.notes ?? undefined,
   allDay: r.all_day ?? false,
   reminders: r.reminders ?? [],
+  source: r.source === "google" ? "google" : "local",
+  organizerName: r.organizer_name ?? undefined,
+  organizerEmail: r.organizer_email ?? undefined,
+  isOwner: r.is_owner ?? true,
+  recurringEventId: r.recurring_event_id ?? undefined,
 });
+
 
 function toRow(e: Partial<CalEvent>) {
   const row: Record<string, unknown> = {};
