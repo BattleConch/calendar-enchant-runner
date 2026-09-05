@@ -443,3 +443,72 @@ function TagChip({ active, onClick, label }: { active: boolean; onClick: () => v
     </motion.button>
   );
 }
+
+function RecurringDelete({
+  open,
+  onCancel,
+  onThisEvent,
+  onAllEvents,
+  error,
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onThisEvent: () => void;
+  onAllEvents: () => void;
+  error: string | null;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="rd-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onCancel}
+            className="fixed inset-0 z-[60] bg-clay/60 backdrop-blur-sm"
+          />
+          <motion.div
+            key="rd-card"
+            initial={{ opacity: 0, scale: 0.94, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 6 }}
+            transition={{ type: "spring", stiffness: 420, damping: 30 }}
+            role="alertdialog"
+            aria-modal="true"
+            className="fixed left-1/2 top-1/2 z-[61] w-[min(21rem,88vw)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-ivory p-6 text-center"
+            style={{ border: "1px solid var(--hairline)", boxShadow: "0 30px 70px -30px rgba(74,63,53,0.5)" }}
+          >
+            <div className="font-serif text-xl text-clay">Delete repeating event</div>
+            <p className="mt-2 text-[13px] leading-relaxed text-clay-soft">
+              This event repeats. What would you like to remove?
+            </p>
+            {error && <p className="mt-3 text-[12px] text-clay-soft">{error}</p>}
+            <div className="mt-5 flex flex-col gap-2">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={onThisEvent}
+                className="w-full rounded-2xl py-3 text-[14px] text-clay"
+                style={{ background: "var(--surface-hover)" }}
+              >
+                This event only
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={onAllEvents}
+                className="w-full rounded-2xl py-3 text-[14px]"
+                style={{ background: "color-mix(in srgb, var(--tag-red) 16%, transparent)", color: "var(--tag-red)" }}
+              >
+                All repeating events
+              </motion.button>
+              <button onClick={onCancel} className="w-full rounded-2xl py-2.5 text-[14px] text-clay-soft">
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
