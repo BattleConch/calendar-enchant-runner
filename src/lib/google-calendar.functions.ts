@@ -98,6 +98,8 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     }
     await deleteConnectionForUser(context.userId, CONNECTOR_ID);
     await context.supabase.from("events").delete().eq("source", "google");
+    await context.supabase.from("tasks").delete().eq("source", "google");
+
     return { ok: true };
   });
 
