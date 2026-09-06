@@ -28,6 +28,8 @@ export function SettingsPage() {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const { mode, resolved, setMode } = useTheme();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const google = useGoogleSync();
+
   const [busy, setBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
