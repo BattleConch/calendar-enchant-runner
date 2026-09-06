@@ -111,6 +111,69 @@ export function SettingsPage() {
         </div>
       </Group>
 
+      {user && (
+        <Group title="Google Calendar & Tasks">
+          <div className="px-4 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-clay-soft"><CalendarDays className="h-4 w-4" /></span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[15px]">
+                  {!google.configured
+                    ? "Google sync unavailable"
+                    : google.connected
+                      ? "Google connected"
+                      : "Google not connected"}
+                </div>
+                <div className="mt-0.5 text-xs text-clay-soft">
+                  {!google.configured
+                    ? "Google sync isn't set up for this app yet."
+                    : google.connected
+                      ? google.syncing
+                        ? "Refreshing your Google events and tasks…"
+                        : "Your Google events and tasks refresh automatically."
+                      : "Bring your Google calendar events and tasks into Calendry."}
+                </div>
+              </div>
+            </div>
+
+            {google.configured && (
+              google.connected ? (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={async () => { haptic(8); await google.sync(); }}
+                    disabled={google.syncing || google.busy}
+                    className="rounded-2xl py-2.5 text-[14px] text-clay disabled:opacity-60"
+                    style={{ background: "var(--surface-hover)" }}
+                  >
+                    {google.syncing ? "Syncing…" : "Sync now"}
+                  </button>
+                  <button
+                    onClick={async () => { haptic(8); await google.unlink(); }}
+                    disabled={google.busy}
+                    className="rounded-2xl py-2.5 text-[14px] text-clay disabled:opacity-60"
+                    style={{ background: "var(--surface-hover)" }}
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={async () => { haptic(8); await google.connect(); }}
+                  disabled={google.busy}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-2.5 text-[14px] disabled:opacity-60"
+                  style={{ background: "var(--clay)", color: "var(--ivory)" }}
+                >
+                  {google.busy ? "Opening Google…" : "Connect Google"}
+                </button>
+              )
+            )}
+
+            {google.error && <div className="mt-2 text-xs text-clay-soft">{google.error}</div>}
+          </div>
+        </Group>
+      )}
+
+
       <Group title="Tags">
         <button
           onClick={() => { haptic(8); setTagsOpen(true); }}
