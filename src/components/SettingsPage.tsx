@@ -4,6 +4,8 @@ import { Bell, Info, Moon, Sparkles, Vibrate, CalendarDays, Sun, Monitor, Cloud,
 import { haptic } from "@/lib/haptics";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { useGoogleSync } from "@/lib/google-sync";
+
 import { TagsManager } from "./TagsManager";
 import { Tags } from "lucide-react";
 
